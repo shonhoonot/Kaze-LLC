@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Noto Sans", "Hiragino Sans", system-ui, sans-serif;
+}
+
+html,
+body {
+  background: #ffffff;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .container-app {
+    @apply mx-auto w-full max-w-app px-4;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-dark;
+  }
+  .btn-outline {
+    @apply btn border border-line text-ink hover:border-ink;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-white;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none focus:border-ink;
+  }
+}
