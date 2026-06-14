@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Api, getToken } from "@/lib/api";
+import type { CouponValidation } from "@/lib/api";
 import type { Cart } from "@/lib/types";
 import { mnt, jpy } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
@@ -22,6 +23,10 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<CouponValidation | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
   useEffect(() => {
     if (!getToken()) {
       router.push("/login?next=/checkout");
@@ -39,6 +44,25 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
+  async function applyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCheckingCoupon(true);
+    try {
+      const res = await Api.validateCoupon(code);
+      setCoupon(res);
+    } catch {
+      setCoupon({ valid: false, code, discount_jpy: 0, discount_mnt: 0, message: "Купоныг шалгаж чадсангүй." });
+    } finally {
+      setCheckingCoupon(false);
+    }
+  }
+
+  function clearCoupon() {
+    setCoupon(null);
+    setCouponInput("");
+  }
+
   async function placeOrder() {
     setError("");
     if (!city || !district || !phone) {
@@ -48,7 +72,8 @@ export default function CheckoutPage() {
     setBusy(true);
     try {
       const address = `${city}, ${district} дүүрэг, ${khoroo ? khoroo + "-р хороо, " : ""}${detail}`;
-      const order = await Api.createOrder(address, phone);
+      const code = coupon?.valid ? coupon.code : null;
+      const order = await Api.createOrder(address, phone, code);
       await refresh();
       router.push(`/orders/${order.id}?pay=1`);
     } catch (e) {
@@ -57,6 +82,8 @@ export default function CheckoutPage() {
       setBusy(false);
     }
   }
+
+  const discountMnt = coupon?.valid ? coupon.discount_mnt : 0;
 
   if (!cart) return <div className="container-app py-20 text-center text-muted">Ачааллаж байна...</div>;
 
@@ -109,10 +136,43 @@ export default function CheckoutPage() {
               <span>{mnt(l.price.line_total_mnt)}</span>
             </div>
           ))}
+          {/* coupon */}
+          <div className="mt-3 border-t border-line pt-3">
+            {coupon?.valid ? (
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm">
+                <span className="font-medium text-emerald-700">🎟 {coupon.code} — {coupon.message}</span>
+                <button className="text-xs text-muted underline" onClick={clearCoupon}>Хасах</button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex gap-2">
+                  <input
+                    className="input flex-1"
+                    placeholder="Купон код"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                  />
+                  <button className="btn-outline shrink-0 px-3 text-sm" onClick={applyCoupon} disabled={checkingCoupon || !couponInput.trim()}>
+                    {checkingCoupon ? "..." : "Хэрэглэх"}
+                  </button>
+                </div>
+                {coupon && !coupon.valid && <p className="mt-1 text-xs text-accent">{coupon.message}</p>}
+              </div>
+            )}
+          </div>
+
+          {discountMnt > 0 && (
+            <div className="mt-3 flex justify-between text-sm text-emerald-700">
+              <span>Хөнгөлөлт</span>
+              <span>−{mnt(discountMnt)}</span>
+            </div>
+          )}
+
           <div className="mt-3 flex justify-between border-t border-line pt-3">
             <span className="font-semibold">Нийт</span>
             <div className="text-right">
-              <div className="text-lg font-bold">{mnt(cart.total_mnt)}</div>
+              <div className="text-lg font-bold">{mnt(cart.total_mnt - discountMnt)}</div>
               <div className="text-xs text-muted">{jpy(cart.total_jpy)}</div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 const NAV = [
   { href: "/admin", label: "Хяналтын самбар" },
   { href: "/admin/products", label: "Бараа" },
+  { href: "/admin/coupons", label: "Купон" },
   { href: "/admin/pricing", label: "Үнэ тооцоо" },
   { href: "/admin/orders", label: "Захиалга" },
   { href: "/admin/boxes", label: "Хайрцаг" },

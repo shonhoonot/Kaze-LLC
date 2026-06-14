@@ -149,6 +149,9 @@ export default function OrderDetailPage() {
             <Row label="Үйлчилгээний шимтгэл" value={jpy(order.markup_jpy)} />
             <Row label="Бараа авах шимтгэл" value={jpy(order.service_fee_jpy)} />
             <Row label={`Хүргэлт (${kg(order.est_weight_grams)})`} value={jpy(order.shipping_fee_jpy)} />
+            {order.discount_jpy > 0 && (
+              <Row label={`Хөнгөлөлт${order.coupon_code ? ` (${order.coupon_code})` : ""}`} value={`−${jpy(order.discount_jpy)}`} />
+            )}
           </div>
           <div className="mt-3 flex justify-between border-t border-line pt-3">
             <span className="font-semibold">Нийт</span>

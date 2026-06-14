@@ -15,6 +15,7 @@ from app.routers import (
     auth,
     cart,
     categories,
+    coupons,
     notifications,
     orders,
     payments,
@@ -65,6 +66,7 @@ app.include_router(categories.router)
 app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(orders.router)
+app.include_router(coupons.router)
 app.include_router(payments.router)
 app.include_router(wishlist.router)
 app.include_router(notifications.router)

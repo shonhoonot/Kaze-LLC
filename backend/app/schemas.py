@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import (
     BoxStatus,
+    CouponType,
     FxMode,
     OrderStatus,
     PaymentStatus,
@@ -233,6 +234,7 @@ class CartOut(BaseModel):
 class OrderCreate(BaseModel):
     delivery_address: str
     delivery_phone: str
+    coupon_code: str | None = None
 
 
 class OrderItemOut(BaseModel):
@@ -276,6 +278,8 @@ class OrderOut(BaseModel):
     service_fee_jpy: int
     est_weight_grams: int
     shipping_fee_jpy: int
+    discount_jpy: int = 0
+    coupon_code: str | None = None
     total_jpy: int
     total_mnt: int
     fx_rate_used: float
@@ -395,3 +399,52 @@ TokenResponse.model_rebuild()
 class WishlistOut(BaseModel):
     product_ids: list[int]
     items: list[ProductOut] = []
+
+
+# ───────────── coupons ─────────────
+class CouponIn(BaseModel):
+    code: str
+    discount_type: CouponType = CouponType.percent
+    value: int
+    min_subtotal_jpy: int = 0
+    max_discount_jpy: int | None = None
+    is_active: bool = True
+    expires_at: datetime | None = None
+    usage_limit: int | None = None
+
+
+class CouponUpdate(BaseModel):
+    discount_type: CouponType | None = None
+    value: int | None = None
+    min_subtotal_jpy: int | None = None
+    max_discount_jpy: int | None = None
+    is_active: bool | None = None
+    expires_at: datetime | None = None
+    usage_limit: int | None = None
+
+
+class CouponOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    discount_type: CouponType
+    value: int
+    min_subtotal_jpy: int
+    max_discount_jpy: int | None
+    is_active: bool
+    expires_at: datetime | None
+    usage_limit: int | None
+    used_count: int
+    created_at: datetime
+
+
+class CouponValidateIn(BaseModel):
+    code: str
+
+
+class CouponValidateOut(BaseModel):
+    valid: bool
+    code: str
+    discount_jpy: int = 0
+    discount_mnt: int = 0
+    message: str

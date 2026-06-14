@@ -85,6 +85,11 @@ class BoxStatus(str, enum.Enum):
     ARRIVED = "ARRIVED"
 
 
+class CouponType(str, enum.Enum):
+    percent = "percent"
+    fixed_jpy = "fixed_jpy"
+
+
 # ─────────────────────────── models ───────────────────────────
 class User(Base):
     __tablename__ = "users"
@@ -223,6 +228,8 @@ class Order(Base):
     service_fee_jpy: Mapped[int] = mapped_column(Integer, default=0)
     est_weight_grams: Mapped[int] = mapped_column(Integer, default=0)
     shipping_fee_jpy: Mapped[int] = mapped_column(Integer, default=0)
+    discount_jpy: Mapped[int] = mapped_column(Integer, default=0)
+    coupon_code: Mapped[str | None] = mapped_column(String(40))
     total_jpy: Mapped[int] = mapped_column(Integer, default=0)
     total_mnt: Mapped[int] = mapped_column(Integer, default=0)
     fx_rate_used: Mapped[float] = mapped_column(Float, default=22.5)
@@ -340,4 +347,22 @@ class Notification(Base):
     title: Mapped[str] = mapped_column(String(160))
     body: Mapped[str | None] = mapped_column(Text)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Coupon(Base):
+    """Discount code applied at checkout against the merchandise subtotal."""
+
+    __tablename__ = "coupons"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    discount_type: Mapped[CouponType] = mapped_column(Enum(CouponType), default=CouponType.percent)
+    value: Mapped[int] = mapped_column(Integer, default=0)  # percent points OR fixed JPY
+    min_subtotal_jpy: Mapped[int] = mapped_column(Integer, default=0)
+    max_discount_jpy: Mapped[int | None] = mapped_column(Integer)  # cap for percent type
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    usage_limit: Mapped[int | None] = mapped_column(Integer)  # total redemptions allowed
+    used_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -13,6 +13,8 @@ from app.models import (
     Box,
     BoxStatus,
     Category,
+    Coupon,
+    CouponType,
     FxMode,
     PricingRule,
     PricingScope,
@@ -111,6 +113,20 @@ def seed() -> None:
 
         db.commit()
         print(f"Seeded {len(cats)} categories and {len(products)} products.")
+
+        # sample coupon for demos
+        if not db.scalar(select(Coupon).where(Coupon.code == "WELCOME10")):
+            db.add(
+                Coupon(
+                    code="WELCOME10",
+                    discount_type=CouponType.percent,
+                    value=10,
+                    min_subtotal_jpy=3000,
+                    max_discount_jpy=1000,
+                )
+            )
+            db.commit()
+            print("Seeded sample coupon WELCOME10.")
     finally:
         db.close()
 

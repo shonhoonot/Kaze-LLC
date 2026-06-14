@@ -114,10 +114,14 @@ export const Api = {
   removeWishlist: (productId: number) => api<Wishlist>(`/wishlist/${productId}`, { method: "DELETE" }),
 
   // orders
-  createOrder: (delivery_address: string, delivery_phone: string) =>
-    api<Order>("/orders", { method: "POST", body: { delivery_address, delivery_phone } }),
+  createOrder: (delivery_address: string, delivery_phone: string, coupon_code?: string | null) =>
+    api<Order>("/orders", { method: "POST", body: { delivery_address, delivery_phone, coupon_code: coupon_code || null } }),
   orders: () => api<Order[]>("/orders"),
   order: (id: number | string) => api<Order>(`/orders/${id}`),
+
+  // coupons
+  validateCoupon: (code: string) =>
+    api<CouponValidation>("/coupons/validate", { method: "POST", body: { code } }),
 
   // payments
   createInvoice: (order_id: number) =>
@@ -179,6 +183,28 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface Coupon {
+  id: number;
+  code: string;
+  discount_type: "percent" | "fixed_jpy";
+  value: number;
+  min_subtotal_jpy: number;
+  max_discount_jpy: number | null;
+  is_active: boolean;
+  expires_at: string | null;
+  usage_limit: number | null;
+  used_count: number;
+  created_at: string;
+}
+
+export interface CouponValidation {
+  valid: boolean;
+  code: string;
+  discount_jpy: number;
+  discount_mnt: number;
+  message: string;
+}
+
 export interface ScrapedProduct {
   source: string;
   source_url: string;
@@ -210,6 +236,9 @@ export const AdminApi = {
     if (!res.ok) throw new ApiError(`${res.status}`, res.status);
     return res.json();
   },
+  coupons: () => api<Coupon[]>("/admin/coupons"),
+  createCoupon: (body: unknown) => api<Coupon>("/admin/coupons", { method: "POST", body }),
+  updateCoupon: (id: number, body: unknown) => api<Coupon>(`/admin/coupons/${id}`, { method: "PATCH", body }),
   pricingRules: () => api<PricingRule[]>("/admin/pricing-rules"),
   upsertPricingRule: (body: unknown) => api<PricingRule>("/admin/pricing-rules", { method: "PUT", body }),
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),

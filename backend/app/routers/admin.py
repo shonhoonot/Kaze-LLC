@@ -15,6 +15,8 @@ from app.models import (
     Box,
     BoxItem,
     BoxStatus,
+    Coupon,
+    CouponType,
     Notification,
     Order,
     OrderPhoto,
@@ -30,6 +32,9 @@ from app.models import (
 from app.schemas import (
     BoxItemIn,
     BoxOut,
+    CouponIn,
+    CouponOut,
+    CouponUpdate,
     DashboardOut,
     OrderOut,
     OrderPhotoIn,
@@ -182,6 +187,47 @@ def admin_list_products(
         .limit(page_size)
     ).all()
     return ProductListOut(items=rows, total=total, page=page, page_size=page_size)
+
+
+# ─────────────── coupons ───────────────
+@router.get("/coupons", response_model=list[CouponOut])
+def list_coupons(db: Session = Depends(get_db), _: User = Depends(require_staff)):
+    return db.scalars(select(Coupon).order_by(Coupon.created_at.desc())).all()
+
+
+@router.post("/coupons", response_model=CouponOut, status_code=201)
+def create_coupon(body: CouponIn, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    code = body.code.strip().upper()
+    if not code:
+        raise HTTPException(400, "Купон код хоосон байж болохгүй")
+    if db.scalar(select(Coupon).where(Coupon.code == code)):
+        raise HTTPException(409, "Энэ купон код аль хэдийн бүртгэгдсэн")
+    if body.value <= 0:
+        raise HTTPException(400, "Хөнгөлөлтийн утга 0-ээс их байх ёстой")
+    if body.discount_type == CouponType.percent and body.value > 100:
+        raise HTTPException(400, "Хувийн хөнгөлөлт 100-аас их байж болохгүй")
+    coupon = Coupon(**{**body.model_dump(), "code": code})
+    db.add(coupon)
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+@router.patch("/coupons/{coupon_id}", response_model=CouponOut)
+def update_coupon(
+    coupon_id: int,
+    body: CouponUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    coupon = db.get(Coupon, coupon_id)
+    if coupon is None:
+        raise HTTPException(404, "Купон олдсонгүй")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(coupon, field, value)
+    db.commit()
+    db.refresh(coupon)
+    return coupon
 
 
 # ─────────────── pricing rules ───────────────

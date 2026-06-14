@@ -17,6 +17,7 @@ from app.models import (
 )
 from app.pricing import price_cart
 from app.schemas import OrderCreate, OrderOut
+from app.services.coupons import CouponError, validate_coupon
 from app.services.notifications import record_order_event
 from app.services.pricing_service import get_global_rule, price_product_line
 
@@ -64,8 +65,21 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         if prior_orders == 0:
             referee_discount_jpy = min(REFEREE_DISCOUNT_JPY, agg.service_fee_jpy)
 
+    # Optional coupon discount against the merchandise subtotal.
+    coupon = None
+    coupon_discount_jpy = 0
+    coupon_code = None
+    if body.coupon_code:
+        try:
+            coupon, coupon_discount_jpy = validate_coupon(
+                db, body.coupon_code, agg.subtotal_jpy
+            )
+            coupon_code = coupon.code
+        except CouponError as exc:
+            raise HTTPException(400, str(exc))
+
     service_fee_jpy = agg.service_fee_jpy - referee_discount_jpy
-    total_jpy = agg.total_jpy - referee_discount_jpy
+    total_jpy = max(0, agg.total_jpy - referee_discount_jpy - coupon_discount_jpy)
     total_mnt = round(total_jpy * fx)
 
     order = Order(
@@ -76,6 +90,8 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         service_fee_jpy=service_fee_jpy,
         est_weight_grams=agg.est_weight_grams,
         shipping_fee_jpy=agg.shipping_fee_jpy,
+        discount_jpy=coupon_discount_jpy,
+        coupon_code=coupon_code,
         total_jpy=total_jpy,
         total_mnt=total_mnt,
         fx_rate_used=fx,
@@ -83,12 +99,16 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         delivery_phone=body.delivery_phone,
     )
     order.items = order_items
+    if coupon is not None:
+        coupon.used_count += 1
     db.add(order)
     db.flush()  # assign order.id before linking the notification
-    placed_note = None
+    notes = []
     if referee_discount_jpy:
-        placed_note = f"Урамшууллын хөнгөлөлт ¥{referee_discount_jpy} хэрэглэгдсэн"
-    record_order_event(db, order, OrderStatus.PLACED, note=placed_note)
+        notes.append(f"Урамшууллын хөнгөлөлт ¥{referee_discount_jpy}")
+    if coupon_discount_jpy:
+        notes.append(f"Купон {coupon_code}: ¥{coupon_discount_jpy} хөнгөлөлт")
+    record_order_event(db, order, OrderStatus.PLACED, note=" • ".join(notes) or None)
 
     cart.status = CartStatus.converted
     db.commit()

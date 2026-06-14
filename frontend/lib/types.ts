@@ -135,6 +135,8 @@ export interface Order {
   service_fee_jpy: number;
   est_weight_grams: number;
   shipping_fee_jpy: number;
+  discount_jpy: number;
+  coupon_code: string | null;
   total_jpy: number;
   total_mnt: number;
   fx_rate_used: number;

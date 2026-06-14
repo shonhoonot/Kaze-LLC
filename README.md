@@ -159,6 +159,12 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Coupons / discounts** — percent (with optional JPY cap) or fixed-JPY codes
+  with min-subtotal, usage-limit and expiry guards. Customers preview the
+  discount against their live cart (`POST /coupons/validate`) and apply it at
+  checkout; admins manage codes under `/admin/coupons`. Discount math lives in
+  `services/coupons` (integer JPY, never exceeds the merchandise subtotal) and
+  stacks with the referral discount. Seeded demo code: `WELCOME10`.
 - **URL product sourcing** — paste a Japanese product URL
   (`POST /admin/products/scrape`) to auto-fill title / price / image / brand
   from JSON-LD + OpenGraph tags. Dependency-free (`services/scraper`), source
