@@ -159,6 +159,10 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Storefront search** — a header search box (desktop input + mobile icon)
+  and a dedicated `/search` page with debounced live querying, category /
+  max-price / sort filters, shareable `?q=` URLs, and load-more pagination,
+  all backed by the existing `/products` query params.
 - **Order cancellation** — customers can cancel an order
   (`POST /orders/{id}/cancel`) only while it's still `PLACED`/`PAID` (before we
   start buying in Japan); paid orders flip to `refunded` and the reason is

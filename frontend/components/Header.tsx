@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "./CartProvider";
@@ -10,7 +11,15 @@ export default function Header() {
   const { user, logout } = useAuth();
   const { count } = useCart();
   const { unread } = useNotifications();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [term, setTerm] = useState("");
+
+  function submitSearch(e: React.FormEvent) {
+    e.preventDefault();
+    router.push(term.trim() ? `/search?q=${encodeURIComponent(term.trim())}` : "/search");
+    setOpen(false);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
@@ -26,7 +35,19 @@ export default function Header() {
           <Link href="/how-it-works" className="hover:text-ink">Хэрхэн ажилладаг</Link>
         </nav>
 
+        <form onSubmit={submitSearch} className="hidden flex-1 max-w-xs lg:block">
+          <input
+            className="input h-10 w-full"
+            placeholder="Бараа хайх..."
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+          />
+        </form>
+
         <div className="flex items-center gap-3">
+          <Link href="/search" className="rounded-full p-2 text-lg hover:bg-line/50 lg:hidden" aria-label="Хайх">
+            🔍
+          </Link>
           {user && (
             <Link href="/notifications" className="relative rounded-full p-2 hover:bg-line/50" aria-label="Мэдэгдэл">
               🔔
@@ -75,6 +96,14 @@ export default function Header() {
       {open && (
         <div className="border-t border-line md:hidden">
           <div className="container-app flex flex-col py-2 text-sm">
+            <form onSubmit={submitSearch} className="py-2">
+              <input
+                className="input w-full"
+                placeholder="Бараа хайх..."
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+              />
+            </form>
             <Link href="/category/clothing" className="py-2" onClick={() => setOpen(false)}>Хувцас</Link>
             <Link href="/category/beauty" className="py-2" onClick={() => setOpen(false)}>Гоо сайхан</Link>
             <Link href="/category/electronics" className="py-2" onClick={() => setOpen(false)}>Цахилгаан</Link>
