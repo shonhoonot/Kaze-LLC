@@ -159,6 +159,12 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Custom product requests** — customers paste a Japanese URL for an item
+  not in the catalogue (`POST /requests`); the scraper snapshots
+  title/price/image best-effort, and staff work a queue
+  (`/admin/requests`) to quote a price, mark fulfilled, or reject — each
+  decision pushes a notification. Customer-facing `/request` page lists their
+  requests with live status.
 - **Storefront search** — a header search box (desktop input + mobile icon)
   and a dedicated `/search` page with debounced live querying, category /
   max-price / sort filters, shareable `?q=` URLs, and load-more pagination,

@@ -90,6 +90,13 @@ class CouponType(str, enum.Enum):
     fixed_jpy = "fixed_jpy"
 
 
+class RequestStatus(str, enum.Enum):
+    pending = "pending"      # awaiting admin review
+    quoted = "quoted"        # admin sent a price quote
+    rejected = "rejected"    # can't be sourced
+    fulfilled = "fulfilled"  # turned into an order/product
+
+
 # ─────────────────────────── models ───────────────────────────
 class User(Base):
     __tablename__ = "users"
@@ -405,5 +412,30 @@ class Review(Base):
     comment: Mapped[str | None] = mapped_column(Text)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)  # user has ordered this product
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship()
+
+
+class ProductRequest(Base):
+    """A customer's request to source a product from a URL not in the catalogue."""
+
+    __tablename__ = "product_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    url: Mapped[str] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)  # size/colour/qty etc.
+    # best-effort snapshot from the scraper at submit time
+    title: Mapped[str | None] = mapped_column(String(255))
+    image_url: Mapped[str | None] = mapped_column(Text)
+    est_price_jpy: Mapped[int | None] = mapped_column(Integer)
+    source: Mapped[ProductSource] = mapped_column(Enum(ProductSource), default=ProductSource.other)
+    status: Mapped[RequestStatus] = mapped_column(Enum(RequestStatus), default=RequestStatus.pending, index=True)
+    admin_note: Mapped[str | None] = mapped_column(Text)
+    quoted_price_mnt: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     user: Mapped[User] = relationship()

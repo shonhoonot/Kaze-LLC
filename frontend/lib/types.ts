@@ -186,6 +186,21 @@ export interface Address {
   created_at: string;
 }
 
+export interface ProductRequest {
+  id: number;
+  url: string;
+  note: string | null;
+  title: string | null;
+  image_url: string | null;
+  est_price_jpy: number | null;
+  source: string;
+  status: "pending" | "quoted" | "rejected" | "fulfilled";
+  admin_note: string | null;
+  quoted_price_mnt: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface User {
   id: number;
   name: string | null;

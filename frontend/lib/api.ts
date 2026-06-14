@@ -3,6 +3,7 @@ import type {
   Cart,
   Category,
   Order,
+  ProductRequest,
   ProductReviews,
   Review,
   Product,
@@ -132,6 +133,11 @@ export const Api = {
   deleteReview: (productId: number | string) =>
     api<void>(`/products/${productId}/reviews`, { method: "DELETE" }),
 
+  // product requests
+  myRequests: () => api<ProductRequest[]>("/requests"),
+  createRequest: (url: string, note?: string) =>
+    api<ProductRequest>("/requests", { method: "POST", body: { url, note: note || null } }),
+
   // coupons
   validateCoupon: (code: string) =>
     api<CouponValidation>("/coupons/validate", { method: "POST", body: { code } }),
@@ -258,6 +264,10 @@ export const AdminApi = {
   coupons: () => api<Coupon[]>("/admin/coupons"),
   createCoupon: (body: unknown) => api<Coupon>("/admin/coupons", { method: "POST", body }),
   updateCoupon: (id: number, body: unknown) => api<Coupon>(`/admin/coupons/${id}`, { method: "PATCH", body }),
+  requests: (status?: string) =>
+    api<ProductRequest[]>(`/admin/requests${status ? `?status=${status}` : ""}`),
+  updateRequest: (id: number, body: unknown) =>
+    api<ProductRequest>(`/admin/requests/${id}`, { method: "PATCH", body }),
   pricingRules: () => api<PricingRule[]>("/admin/pricing-rules"),
   upsertPricingRule: (body: unknown) => api<PricingRule>("/admin/pricing-rules", { method: "PUT", body }),
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),

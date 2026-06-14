@@ -13,6 +13,7 @@ from app.models import (
     PaymentStatus,
     PricingScope,
     ProductSource,
+    RequestStatus,
     UserRole,
 )
 
@@ -520,3 +521,31 @@ class ProductReviewsOut(BaseModel):
     summary: ReviewSummary
     items: list[ReviewOut] = []
     my_review: ReviewOut | None = None
+
+
+# ───────────── product requests ─────────────
+class ProductRequestIn(BaseModel):
+    url: str
+    note: str | None = None
+
+
+class ProductRequestUpdate(BaseModel):
+    status: RequestStatus | None = None
+    admin_note: str | None = None
+    quoted_price_mnt: int | None = None
+
+
+class ProductRequestOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    url: str
+    note: str | None
+    title: str | None
+    image_url: str | None
+    est_price_jpy: int | None
+    source: ProductSource
+    status: RequestStatus
+    admin_note: str | None
+    quoted_price_mnt: int | None
+    created_at: datetime
+    updated_at: datetime

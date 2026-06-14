@@ -26,7 +26,9 @@ from app.models import (
     PricingScope,
     Product,
     ProductImage,
+    ProductRequest,
     ProductSource,
+    RequestStatus,
     User,
 )
 from app.schemas import (
@@ -44,6 +46,8 @@ from app.schemas import (
     ProductIn,
     ProductListOut,
     ProductOut,
+    ProductRequestOut,
+    ProductRequestUpdate,
     ProductScrapeIn,
     ProductScrapeOut,
     ProductUpdate,
@@ -228,6 +232,52 @@ def update_coupon(
     db.commit()
     db.refresh(coupon)
     return coupon
+
+
+# ─────────────── product requests ───────────────
+@router.get("/requests", response_model=list[ProductRequestOut])
+def list_requests(
+    status: RequestStatus | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    stmt = select(ProductRequest)
+    if status:
+        stmt = stmt.where(ProductRequest.status == status)
+    return db.scalars(stmt.order_by(ProductRequest.created_at.desc())).all()
+
+
+@router.patch("/requests/{request_id}", response_model=ProductRequestOut)
+def update_request(
+    request_id: int,
+    body: ProductRequestUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    req = db.get(ProductRequest, request_id)
+    if req is None:
+        raise HTTPException(404, "Хүсэлт олдсонгүй")
+    prev_status = req.status
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(req, field, value)
+    # notify the customer when the admin responds with a quote or decision
+    if body.status is not None and body.status != prev_status:
+        _notify_request(db, req)
+    db.commit()
+    db.refresh(req)
+    return req
+
+
+def _notify_request(db: Session, req: ProductRequest) -> None:
+    copy = {
+        RequestStatus.quoted: ("Захиалгат бараа — үнийн санал", "Таны хүсэлтэд үнэ гаргалаа."),
+        RequestStatus.rejected: ("Захиалгат бараа", "Уучлаарай, энэ барааг олох боломжгүй байна."),
+        RequestStatus.fulfilled: ("Захиалгат бараа бэлэн", "Таны хүсэлтийн дагуу бараа нэмэгдлээ."),
+    }.get(req.status)
+    if copy:
+        title, suffix = copy
+        body_text = req.admin_note or suffix
+        db.add(Notification(user_id=req.user_id, title=title, body=body_text))
 
 
 # ─────────────── pricing rules ───────────────
