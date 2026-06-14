@@ -54,6 +54,22 @@ def get_current_user(
     return user
 
 
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """Like get_current_user but returns None instead of raising when anonymous."""
+    if credentials is None:
+        return None
+    try:
+        payload = jwt.decode(
+            credentials.credentials, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+        )
+        return db.get(User, int(payload["sub"]))
+    except (JWTError, KeyError, ValueError):
+        return None
+
+
 def require_staff(user: User = Depends(get_current_user)) -> User:
     if user.role not in (UserRole.admin, UserRole.staff):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Зөвшөөрөлгүй")

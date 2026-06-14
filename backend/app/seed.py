@@ -21,6 +21,7 @@ from app.models import (
     Product,
     ProductImage,
     ProductSource,
+    Review,
     User,
     UserRole,
 )
@@ -127,6 +128,25 @@ def seed() -> None:
             )
             db.commit()
             print("Seeded sample coupon WELCOME10.")
+
+        # demo reviews on the first few products
+        if not db.scalar(select(Review).limit(1)):
+            demo_users = []
+            for i, name in enumerate(("Болор", "Тэмүүлэн", "Сараа"), start=1):
+                phone = f"+9769911000{i}"
+                u = db.scalar(select(User).where(User.phone == phone))
+                if u is None:
+                    u = User(name=name, phone=phone, role=UserRole.customer)
+                    db.add(u)
+                    db.flush()
+                demo_users.append(u)
+            demo_products = db.scalars(select(Product).order_by(Product.id).limit(3)).all()
+            demo_ratings = [(5, "Чанартай, хурдан ирсэн."), (4, "Сэтгэл хангалуун байна."), (5, "Дахин захиална!")]
+            for prod in demo_products:
+                for u, (stars, text) in zip(demo_users, demo_ratings):
+                    db.add(Review(product_id=prod.id, user_id=u.id, rating=stars, comment=text, verified=True))
+            db.commit()
+            print("Seeded demo reviews.")
     finally:
         db.close()
 

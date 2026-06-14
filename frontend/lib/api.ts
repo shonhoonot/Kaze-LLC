@@ -3,6 +3,8 @@ import type {
   Cart,
   Category,
   Order,
+  ProductReviews,
+  Review,
   Product,
   ProductList,
   User,
@@ -119,6 +121,14 @@ export const Api = {
     api<Order>("/orders", { method: "POST", body: { delivery_address, delivery_phone, coupon_code: coupon_code || null } }),
   orders: () => api<Order[]>("/orders"),
   order: (id: number | string) => api<Order>(`/orders/${id}`),
+
+  // reviews
+  productReviews: (productId: number | string) =>
+    api<ProductReviews>(`/products/${productId}/reviews`),
+  submitReview: (productId: number | string, rating: number, comment?: string | null) =>
+    api<Review>(`/products/${productId}/reviews`, { method: "POST", body: { rating, comment: comment || null } }),
+  deleteReview: (productId: number | string) =>
+    api<void>(`/products/${productId}/reviews`, { method: "DELETE" }),
 
   // coupons
   validateCoupon: (code: string) =>

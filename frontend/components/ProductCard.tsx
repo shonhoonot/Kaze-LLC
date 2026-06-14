@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { mnt, jpy } from "@/lib/format";
 import { useWishlist } from "./WishlistProvider";
+import { Stars } from "./Stars";
 
 export default function ProductCard({ product }: { product: Product }) {
   const img = product.images[0]?.url;
@@ -43,6 +44,12 @@ export default function ProductCard({ product }: { product: Product }) {
               <div className="text-[11px] uppercase tracking-wide text-muted">{product.brand}</div>
             )}
             <div className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{product.title_mn}</div>
+            {product.review_count > 0 && product.avg_rating != null && (
+              <div className="mt-1 flex items-center gap-1 text-[11px] text-muted">
+                <Stars value={product.avg_rating} size="text-[11px]" />
+                <span>({product.review_count})</span>
+              </div>
+            )}
             {price && (
               <div className="mt-1">
                 <div className="text-base font-bold text-ink">{mnt(price.unit_total_mnt)}</div>

@@ -21,6 +21,7 @@ from app.routers import (
     orders,
     payments,
     products,
+    reviews,
     wishlist,
 )
 from app.schemas import BoxFillOut
@@ -65,6 +66,7 @@ app.include_router(public)
 app.include_router(auth.router)
 app.include_router(categories.router)
 app.include_router(products.router)
+app.include_router(reviews.router)
 app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(addresses.router)

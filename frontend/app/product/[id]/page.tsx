@@ -7,6 +7,8 @@ import type { Product } from "@/lib/types";
 import { mnt, jpy, kg } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
+import { Stars } from "@/components/Stars";
+import ProductReviewsSection from "@/components/ProductReviewsSection";
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
@@ -48,7 +50,8 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="container-app grid gap-10 py-8 md:grid-cols-2">
+    <div className="container-app py-8">
+    <div className="grid gap-10 md:grid-cols-2">
       {/* gallery */}
       <div>
         <div className="aspect-square w-full overflow-hidden rounded-2xl bg-[#F5F5F5]">
@@ -80,6 +83,12 @@ export default function ProductPage() {
         {product.brand && <div className="text-sm uppercase tracking-wide text-muted">{product.brand}</div>}
         <h1 className="mt-1 text-2xl font-bold">{product.title_mn}</h1>
         {product.title_ja && <p className="text-sm text-muted">{product.title_ja}</p>}
+        {product.review_count > 0 && product.avg_rating != null && (
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <Stars value={product.avg_rating} />
+            <span className="text-muted">{product.avg_rating.toFixed(1)} ({product.review_count})</span>
+          </div>
+        )}
 
         <div className="mt-5 text-3xl font-bold">{mnt(price.unit_total_mnt)}</div>
         <div className="text-sm text-muted">{jpy(price.line_total_jpy)} — бүх төлбөр багтсан</div>
@@ -142,6 +151,9 @@ export default function ProductPage() {
           </a>
         )}
       </div>
+    </div>
+
+      <ProductReviewsSection productId={product.id} />
     </div>
   );
 }

@@ -159,6 +159,12 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Reviews & ratings** — one star rating + comment per user per product
+  (`/products/{id}/reviews` GET/POST-upsert/DELETE), with a verified-buyer
+  badge when the reviewer has ordered the product. Aggregates
+  (`services/reviews`) surface `avg_rating` + `review_count` on every product
+  card and detail page (batched to avoid N+1), with a star-distribution
+  breakdown and inline write/edit form. Demo reviews are seeded.
 - **Address book** — customers save multiple delivery addresses
   (`/addresses` CRUD) with exactly one default enforced server-side; checkout
   offers saved addresses as radio cards (default pre-selected) or a new-address

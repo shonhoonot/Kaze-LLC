@@ -9,14 +9,20 @@ from app.database import get_db
 from app.models import Category, Product
 from app.schemas import PriceBreakdown, ProductListOut, ProductOut
 from app.services.pricing_service import price_breakdown_dict, price_product_line
+from app.services.reviews import rating_for, rating_map
 
 router = APIRouter(tags=["products"])
 
 
-def _attach_price(db: Session, product: Product) -> ProductOut:
+def _attach_price(
+    db: Session, product: Product, rating: tuple[float | None, int] | None = None
+) -> ProductOut:
     out = ProductOut.model_validate(product)
     line = price_product_line(db, product, qty=1)
     out.price = PriceBreakdown(**price_breakdown_dict(line))
+    if rating is None:
+        rating = rating_for(db, product.id)
+    out.avg_rating, out.review_count = rating
     return out
 
 
@@ -64,8 +70,9 @@ def list_products(
         .limit(page_size)
     ).all()
 
+    ratings = rating_map(db, [p.id for p in rows])
     return ProductListOut(
-        items=[_attach_price(db, p) for p in rows],
+        items=[_attach_price(db, p, ratings.get(p.id, (None, 0))) for p in rows],
         total=total,
         page=page,
         page_size=page_size,

@@ -390,3 +390,20 @@ class Coupon(Base):
     usage_limit: Mapped[int | None] = mapped_column(Integer)  # total redemptions allowed
     used_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Review(Base):
+    """A customer's star rating + comment for a product (one per user/product)."""
+
+    __tablename__ = "reviews"
+    __table_args__ = (UniqueConstraint("product_id", "user_id", name="uq_review_user_product"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    rating: Mapped[int] = mapped_column(Integer)  # 1..5
+    comment: Mapped[str | None] = mapped_column(Text)
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)  # user has ordered this product
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped[User] = relationship()

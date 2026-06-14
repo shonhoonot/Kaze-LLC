@@ -119,6 +119,8 @@ class ProductOut(BaseModel):
     images: list[ProductImageOut] = []
     # computed for the customer (qty=1)
     price: PriceBreakdown | None = None
+    avg_rating: float | None = None
+    review_count: int = 0
 
 
 class ProductListOut(BaseModel):
@@ -486,3 +488,31 @@ class AddressOut(BaseModel):
     is_default: bool
     formatted: str
     created_at: datetime
+
+
+# ───────────── reviews ─────────────
+class ReviewIn(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: str | None = None
+
+
+class ReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    rating: int
+    comment: str | None
+    verified: bool
+    author_name: str
+    created_at: datetime
+
+
+class ReviewSummary(BaseModel):
+    avg_rating: float | None = None
+    review_count: int = 0
+    distribution: dict[int, int] = {}  # star -> count
+
+
+class ProductReviewsOut(BaseModel):
+    summary: ReviewSummary
+    items: list[ReviewOut] = []
+    my_review: ReviewOut | None = None

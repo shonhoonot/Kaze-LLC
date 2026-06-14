@@ -31,6 +31,29 @@ export interface Product {
   is_active: boolean;
   images: ProductImage[];
   price: PriceBreakdown | null;
+  avg_rating: number | null;
+  review_count: number;
+}
+
+export interface Review {
+  id: number;
+  rating: number;
+  comment: string | null;
+  verified: boolean;
+  author_name: string;
+  created_at: string;
+}
+
+export interface ReviewSummary {
+  avg_rating: number | null;
+  review_count: number;
+  distribution: Record<string, number>;
+}
+
+export interface ProductReviews {
+  summary: ReviewSummary;
+  items: Review[];
+  my_review: Review | null;
 }
 
 export interface ProductList {
