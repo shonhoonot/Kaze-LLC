@@ -1,4 +1,5 @@
 import type {
+  Address,
   Cart,
   Category,
   Order,
@@ -122,6 +123,12 @@ export const Api = {
   // coupons
   validateCoupon: (code: string) =>
     api<CouponValidation>("/coupons/validate", { method: "POST", body: { code } }),
+
+  // address book
+  addresses: () => api<Address[]>("/addresses"),
+  createAddress: (body: unknown) => api<Address>("/addresses", { method: "POST", body }),
+  updateAddress: (id: number, body: unknown) => api<Address>(`/addresses/${id}`, { method: "PATCH", body }),
+  deleteAddress: (id: number) => api<void>(`/addresses/${id}`, { method: "DELETE" }),
 
   // payments
   createInvoice: (order_id: number) =>

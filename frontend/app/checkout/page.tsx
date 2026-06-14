@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Api, getToken } from "@/lib/api";
 import type { CouponValidation } from "@/lib/api";
-import type { Cart } from "@/lib/types";
+import type { Address, Cart } from "@/lib/types";
 import { mnt, jpy } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/components/CartProvider";
@@ -23,6 +23,13 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  // address book
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [label, setLabel] = useState("");
+  const [saveNew, setSaveNew] = useState(true);
+
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<CouponValidation | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
@@ -33,16 +40,17 @@ export default function CheckoutPage() {
       return;
     }
     Api.cart().then(setCart);
+    Api.addresses().then((list) => {
+      setAddresses(list);
+      const def = list.find((a) => a.is_default) || list[0];
+      if (def) setSelectedId(def.id);
+      else setAddingNew(true);
+    });
   }, [router]);
 
   useEffect(() => {
-    if (user) {
-      setCity(user.city || "");
-      setDistrict(user.district || "");
-      setPhone(user.phone || "");
-      if (user.default_address) setDetail(user.default_address);
-    }
-  }, [user]);
+    if (user && phone === "") setPhone(user.phone || "");
+  }, [user, phone]);
 
   async function applyCoupon() {
     const code = couponInput.trim();
@@ -63,17 +71,45 @@ export default function CheckoutPage() {
     setCouponInput("");
   }
 
+  const usingSaved = !addingNew && selectedId != null;
+
   async function placeOrder() {
     setError("");
-    if (!city || !district || !phone) {
-      setError("Хот, дүүрэг, утасны дугаараа бөглөнө үү.");
-      return;
+    let address: string;
+    let deliveryPhone: string;
+
+    if (usingSaved) {
+      const picked = addresses.find((a) => a.id === selectedId);
+      if (!picked) {
+        setError("Хаягаа сонгоно уу.");
+        return;
+      }
+      address = picked.formatted;
+      deliveryPhone = picked.phone;
+    } else {
+      if (!city || !district || !phone) {
+        setError("Хот, дүүрэг, утасны дугаараа бөглөнө үү.");
+        return;
+      }
+      address = `${city}, ${district} дүүрэг, ${khoroo ? khoroo + "-р хороо, " : ""}${detail}`;
+      deliveryPhone = phone;
     }
+
     setBusy(true);
     try {
-      const address = `${city}, ${district} дүүрэг, ${khoroo ? khoroo + "-р хороо, " : ""}${detail}`;
+      if (!usingSaved && saveNew) {
+        await Api.createAddress({
+          label: label || null,
+          phone,
+          city,
+          district,
+          khoroo: khoroo || null,
+          detail: detail || null,
+          is_default: addresses.length === 0,
+        }).catch(() => null); // saving is best-effort; don't block the order
+      }
       const code = coupon?.valid ? coupon.code : null;
-      const order = await Api.createOrder(address, phone, code);
+      const order = await Api.createOrder(address, deliveryPhone, code);
       await refresh();
       router.push(`/orders/${order.id}?pay=1`);
     } catch (e) {
@@ -91,7 +127,63 @@ export default function CheckoutPage() {
     <div className="container-app grid gap-8 py-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <h1 className="mb-5 text-2xl font-bold">Хүргэлтийн мэдээлэл</h1>
+
+        {addresses.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {addresses.map((a) => (
+              <label
+                key={a.id}
+                className={`card flex cursor-pointer items-start gap-3 p-4 ${
+                  usingSaved && selectedId === a.id ? "ring-2 ring-ink" : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="address"
+                  className="mt-1"
+                  checked={usingSaved && selectedId === a.id}
+                  onChange={() => {
+                    setSelectedId(a.id);
+                    setAddingNew(false);
+                  }}
+                />
+                <div className="flex-1 text-sm">
+                  <div className="flex items-center gap-2 font-medium">
+                    {a.label || "Хаяг"}
+                    {a.is_default && (
+                      <span className="rounded bg-line px-1.5 py-0.5 text-[10px] text-muted">Үндсэн</span>
+                    )}
+                  </div>
+                  <div className="text-muted">{a.formatted}</div>
+                  <div className="text-xs text-muted">📞 {a.phone}</div>
+                </div>
+              </label>
+            ))}
+            {!addingNew && (
+              <button
+                className="text-sm text-accent"
+                onClick={() => {
+                  setAddingNew(true);
+                  setSelectedId(null);
+                }}
+              >
+                + Шинэ хаяг нэмэх
+              </button>
+            )}
+          </div>
+        )}
+
+        {(addingNew || addresses.length === 0) && (
         <div className="card space-y-3 p-5">
+          {addresses.length > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Шинэ хаяг</span>
+              <button className="text-xs text-muted underline" onClick={() => setAddingNew(false)}>
+                Болих
+              </button>
+            </div>
+          )}
+          <input className="input" placeholder="Нэр (ж: Гэр, Ажил)" value={label} onChange={(e) => setLabel(e.target.value)} />
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-xs text-muted">Хот / аймаг</label>
@@ -114,7 +206,12 @@ export default function CheckoutPage() {
             <label className="text-xs text-muted">Дэлгэрэнгүй хаяг</label>
             <textarea className="input mt-1" rows={2} placeholder="Байр, орц, тоот..." value={detail} onChange={(e) => setDetail(e.target.value)} />
           </div>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            <input type="checkbox" checked={saveNew} onChange={(e) => setSaveNew(e.target.checked)} />
+            Энэ хаягийг хадгалах
+          </label>
         </div>
+        )}
 
         <h2 className="mb-3 mt-6 text-lg font-bold">Төлбөрийн хэлбэр</h2>
         <div className="card flex items-center gap-3 p-4">

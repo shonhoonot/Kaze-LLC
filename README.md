@@ -159,6 +159,12 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Address book** — customers save multiple delivery addresses
+  (`/addresses` CRUD) with exactly one default enforced server-side; checkout
+  offers saved addresses as radio cards (default pre-selected) or a new-address
+  form that can be saved inline, and the account page manages the book. The
+  order's `delivery_address` snapshot is built from the address's `formatted`
+  property.
 - **Coupons / discounts** — percent (with optional JPY cap) or fixed-JPY codes
   with min-subtotal, usage-limit and expiry guards. Customers preview the
   discount against their live cart (`POST /coupons/validate`) and apply it at

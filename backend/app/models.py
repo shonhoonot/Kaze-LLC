@@ -112,6 +112,30 @@ class User(Base):
     orders: Mapped[list[Order]] = relationship(back_populates="user")
 
 
+class Address(Base):
+    """A saved delivery address in the customer's address book."""
+
+    __tablename__ = "addresses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str | None] = mapped_column(String(40))  # e.g. "Гэр", "Ажил"
+    recipient_name: Mapped[str | None] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(20))
+    city: Mapped[str] = mapped_column(String(120))
+    district: Mapped[str] = mapped_column(String(120))
+    khoroo: Mapped[str | None] = mapped_column(String(40))
+    detail: Mapped[str | None] = mapped_column(Text)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    @property
+    def formatted(self) -> str:
+        """Single-line address used as the order's delivery_address snapshot."""
+        khoroo = f"{self.khoroo}-р хороо, " if self.khoroo else ""
+        return f"{self.city}, {self.district} дүүрэг, {khoroo}{self.detail or ''}".strip()
+
+
 class OtpCode(Base):
     __tablename__ = "otp_codes"
 

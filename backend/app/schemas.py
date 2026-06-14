@@ -448,3 +448,41 @@ class CouponValidateOut(BaseModel):
     discount_jpy: int = 0
     discount_mnt: int = 0
     message: str
+
+
+# ───────────── addresses ─────────────
+class AddressIn(BaseModel):
+    label: str | None = None
+    recipient_name: str | None = None
+    phone: str
+    city: str
+    district: str
+    khoroo: str | None = None
+    detail: str | None = None
+    is_default: bool = False
+
+
+class AddressUpdate(BaseModel):
+    label: str | None = None
+    recipient_name: str | None = None
+    phone: str | None = None
+    city: str | None = None
+    district: str | None = None
+    khoroo: str | None = None
+    detail: str | None = None
+    is_default: bool | None = None
+
+
+class AddressOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    label: str | None
+    recipient_name: str | None
+    phone: str
+    city: str
+    district: str
+    khoroo: str | None
+    detail: str | None
+    is_default: bool
+    formatted: str
+    created_at: datetime

@@ -149,6 +149,20 @@ export interface Order {
   photos: OrderPhoto[];
 }
 
+export interface Address {
+  id: number;
+  label: string | null;
+  recipient_name: string | null;
+  phone: string;
+  city: string;
+  district: string;
+  khoroo: string | null;
+  detail: string | null;
+  is_default: boolean;
+  formatted: string;
+  created_at: string;
+}
+
 export interface User {
   id: number;
   name: string | null;

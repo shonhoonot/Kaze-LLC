@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getToken } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { mnt } from "@/lib/format";
+import AddressBook from "@/components/AddressBook";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -45,6 +46,8 @@ export default function AccountPage() {
         <Field label="Хот / Дүүрэг" value={[user.city, user.district].filter(Boolean).join(", ") || "—"} />
         <Field label="Хаяг" value={user.default_address || "—"} />
       </div>
+
+      <AddressBook />
 
       <div className="card mt-4 p-5">
         <h2 className="font-semibold">Урилгын код</h2>
