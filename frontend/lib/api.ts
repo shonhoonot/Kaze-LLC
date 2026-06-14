@@ -121,6 +121,8 @@ export const Api = {
     api<Order>("/orders", { method: "POST", body: { delivery_address, delivery_phone, coupon_code: coupon_code || null } }),
   orders: () => api<Order[]>("/orders"),
   order: (id: number | string) => api<Order>(`/orders/${id}`),
+  cancelOrder: (id: number | string, reason?: string) =>
+    api<Order>(`/orders/${id}/cancel`, { method: "POST", body: { reason: reason || null } }),
 
   // reviews
   productReviews: (productId: number | string) =>

@@ -239,6 +239,10 @@ class OrderCreate(BaseModel):
     coupon_code: str | None = None
 
 
+class OrderCancel(BaseModel):
+    reason: str | None = None
+
+
 class OrderItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

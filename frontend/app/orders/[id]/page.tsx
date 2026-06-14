@@ -24,6 +24,8 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [busy, setBusy] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const load = useCallback(async () => {
     const o = await Api.order(params.id);
@@ -63,7 +65,22 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function doCancel() {
+    if (!order) return;
+    setBusy(true);
+    try {
+      await Api.cancelOrder(order.id, cancelReason);
+      setCancelling(false);
+      setCancelReason("");
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!order) return <div className="container-app py-20 text-center text-muted">Ачааллаж байна...</div>;
+
+  const cancellable = order.status === "PLACED" || order.status === "PAID";
 
   return (
     <div className="container-app grid gap-8 py-8 lg:grid-cols-3">
@@ -96,6 +113,45 @@ export default function OrderDetailPage() {
             ) : (
               <button className="btn-primary mt-3" onClick={() => startPayment(order.id)} disabled={busy}>
                 {busy ? "Уншиж байна..." : "QPay-ээр төлөх"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {order.status === "CANCELLED" && (
+          <div className="mt-4 rounded-xl bg-[#FAFAFA] px-4 py-3 text-sm text-muted">
+            Энэ захиалга цуцлагдсан.
+            {order.payment_status === "refunded" && " Төлбөрийг буцаан олгоно."}
+          </div>
+        )}
+
+        {cancellable && (
+          <div className="mt-4">
+            {cancelling ? (
+              <div className="card p-4">
+                <div className="text-sm font-medium">Захиалгыг цуцлах уу?</div>
+                <p className="mt-1 text-xs text-muted">
+                  Бараа Японд худалдаж авахаас өмнө цуцлах боломжтой. Төлбөр төлсөн бол буцаан олгоно.
+                </p>
+                <textarea
+                  className="input mt-2"
+                  rows={2}
+                  placeholder="Шалтгаан (заавал биш)"
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                />
+                <div className="mt-2 flex gap-2">
+                  <button className="btn-primary px-4 py-2 text-sm" onClick={doCancel} disabled={busy}>
+                    Тийм, цуцлах
+                  </button>
+                  <button className="btn-outline px-4 py-2 text-sm" onClick={() => setCancelling(false)} disabled={busy}>
+                    Болих
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button className="text-sm text-muted underline hover:text-accent" onClick={() => setCancelling(true)}>
+                Захиалга цуцлах
               </button>
             )}
           </div>

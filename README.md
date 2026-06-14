@@ -159,6 +159,11 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Order cancellation** — customers can cancel an order
+  (`POST /orders/{id}/cancel`) only while it's still `PLACED`/`PAID` (before we
+  start buying in Japan); paid orders flip to `refunded` and the reason is
+  captured on the order timeline. The order page shows an inline confirm with
+  an optional reason.
 - **Reviews & ratings** — one star rating + comment per user per product
   (`/products/{id}/reviews` GET/POST-upsert/DELETE), with a verified-buyer
   badge when the reviewer has ordered the product. Aggregates

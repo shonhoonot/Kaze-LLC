@@ -13,10 +13,11 @@ from app.models import (
     Order,
     OrderItem,
     OrderStatus,
+    PaymentStatus,
     User,
 )
 from app.pricing import price_cart
-from app.schemas import OrderCreate, OrderOut
+from app.schemas import OrderCancel, OrderCreate, OrderOut
 from app.services.coupons import CouponError, validate_coupon
 from app.services.notifications import record_order_event
 from app.services.pricing_service import get_global_rule, price_product_line
@@ -135,4 +136,36 @@ def get_order(order_id: int, db: Session = Depends(get_db), user: User = Depends
     order = db.get(Order, order_id)
     if order is None or order.user_id != user.id:
         raise HTTPException(404, "Захиалга олдсонгүй")
+    return order
+
+
+# Orders can be cancelled by the customer only before we start buying in Japan.
+CANCELLABLE_STATUSES = (OrderStatus.PLACED, OrderStatus.PAID)
+
+
+@router.post("/{order_id}/cancel", response_model=OrderOut)
+def cancel_order(
+    order_id: int,
+    body: OrderCancel,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    order = db.get(Order, order_id)
+    if order is None or order.user_id != user.id:
+        raise HTTPException(404, "Захиалга олдсонгүй")
+    if order.status not in CANCELLABLE_STATUSES:
+        raise HTTPException(400, "Энэ захиалгыг цуцлах боломжгүй — бэлтгэл хийгдсэн байна")
+
+    notes = []
+    reason = (body.reason or "").strip()
+    if reason:
+        notes.append(f"Шалтгаан: {reason}")
+    if order.payment_status == PaymentStatus.paid:
+        order.payment_status = PaymentStatus.refunded
+        notes.append("Төлбөрийг буцаан олгоно")
+
+    order.status = OrderStatus.CANCELLED
+    record_order_event(db, order, OrderStatus.CANCELLED, note=" • ".join(notes) or None)
+    db.commit()
+    db.refresh(order)
     return order
