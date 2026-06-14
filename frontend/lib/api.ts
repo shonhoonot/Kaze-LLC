@@ -156,19 +156,45 @@ export interface Box {
   created_at: string;
 }
 
+export interface StatusCount {
+  status: string;
+  count: number;
+}
+
 export interface Dashboard {
   orders_today: number;
   revenue_today_mnt: number;
   avg_margin_per_order_jpy: number;
   boxes_this_month: number;
   open_box_fill_percent: number;
+  pending_orders: number;
+  orders_this_month: number;
+  revenue_month_mnt: number;
+  active_products: number;
+  status_counts: StatusCount[];
+}
+
+export interface ImportResult {
+  created: number;
+  errors: string[];
 }
 
 export const AdminApi = {
   dashboard: () => api<Dashboard>("/admin/dashboard"),
+  products: (qs = "") => api<ProductList>(`/admin/products${qs ? `?${qs}` : ""}`),
   createProduct: (body: unknown) => api<Product>("/admin/products", { method: "POST", body }),
   updateProduct: (id: number, body: unknown) => api<Product>(`/admin/products/${id}`, { method: "PATCH", body }),
   deleteProduct: (id: number) => api<void>(`/admin/products/${id}`, { method: "DELETE" }),
+  importProductsCsv: async (file: File): Promise<ImportResult> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${BASE}/admin/products/import`, { method: "POST", headers, body: fd });
+    if (!res.ok) throw new ApiError(`${res.status}`, res.status);
+    return res.json();
+  },
   pricingRules: () => api<PricingRule[]>("/admin/pricing-rules"),
   upsertPricingRule: (body: unknown) => api<PricingRule>("/admin/pricing-rules", { method: "PUT", body }),
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),

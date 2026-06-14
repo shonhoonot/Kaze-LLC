@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Api, AdminApi } from "@/lib/api";
+import type { ImportResult } from "@/lib/api";
 import type { Category, Product } from "@/lib/types";
 import { jpy } from "@/lib/format";
 
@@ -17,21 +18,51 @@ const EMPTY = {
   image_url: "",
 };
 
+const PAGE_SIZE = 20;
+
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
 
-  async function load() {
-    const [list, cats] = await Promise.all([Api.products("page=1&page_size=100"), Api.categories()]);
+  // list controls
+  const [q, setQ] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [active, setActive] = useState("all");
+  const [page, setPage] = useState(1);
+
+  // csv import
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<ImportResult | null>(null);
+
+  const load = useCallback(async () => {
+    const qs = new URLSearchParams({
+      page: String(page),
+      page_size: String(PAGE_SIZE),
+      active,
+    });
+    if (q) qs.set("q", q);
+    if (categoryId) qs.set("category_id", categoryId);
+    const list = await AdminApi.products(qs.toString());
     setProducts(list.items);
-    setCategories(cats);
-  }
+    setTotal(list.total);
+  }, [page, active, q, categoryId]);
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  useEffect(() => {
+    Api.categories().then(setCategories);
   }, []);
+
+  // reset to first page whenever a filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [q, categoryId, active]);
 
   async function create() {
     setSaving(true);
@@ -54,15 +85,32 @@ export default function AdminProducts() {
     }
   }
 
-  async function remove(id: number) {
-    await AdminApi.deleteProduct(id);
+  async function setActiveState(id: number, value: boolean) {
+    await AdminApi.updateProduct(id, { is_active: value });
     await load();
   }
 
+  async function runImport() {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      const res = await AdminApi.importProductsCsv(file);
+      setImportMsg(res);
+      if (fileRef.current) fileRef.current.value = "";
+      await load();
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <div className="grid gap-8 lg:grid-cols-3">
-      {/* add form */}
-      <div className="lg:col-span-1">
+      {/* add form + csv import */}
+      <div className="space-y-6 lg:col-span-1">
         <div className="card p-5">
           <h2 className="mb-3 font-semibold">Бараа нэмэх</h2>
           <p className="mb-3 text-xs text-muted">
@@ -93,14 +141,58 @@ export default function AdminProducts() {
             </button>
           </div>
         </div>
+
+        <div className="card p-5">
+          <h2 className="mb-1 font-semibold">CSV-ээр олноор нэмэх</h2>
+          <p className="mb-3 text-xs text-muted">
+            Баганууд:{" "}
+            <code className="text-[11px]">title_mn, title_ja, brand, source, source_url, sku, category_id, base_price_jpy, weight_grams, image_url</code>
+          </p>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="block w-full text-sm" />
+          <button className="btn-outline mt-3 w-full py-2 text-sm" onClick={runImport} disabled={importing}>
+            {importing ? "Импортолж байна..." : "Импортлох"}
+          </button>
+          {importMsg && (
+            <div className="mt-3 text-xs">
+              <div className="font-medium text-ink">{importMsg.created} бараа нэмэгдлээ</div>
+              {importMsg.errors.length > 0 && (
+                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-accent">
+                  {importMsg.errors.map((er, i) => (
+                    <li key={i}>{er}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* list */}
+      {/* list + filters */}
       <div className="lg:col-span-2">
-        <h2 className="mb-3 font-semibold">Бараа ({products.length})</h2>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <input
+            className="input max-w-[220px]"
+            placeholder="Хайх (нэр, брэнд, SKU)"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <select className="input max-w-[160px]" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+            <option value="">Бүх ангилал</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name_mn}</option>
+            ))}
+          </select>
+          <select className="input max-w-[150px]" value={active} onChange={(e) => setActive(e.target.value)}>
+            <option value="all">Бүгд</option>
+            <option value="active">Идэвхтэй</option>
+            <option value="inactive">Идэвхгүй</option>
+          </select>
+          <span className="ml-auto text-sm text-muted">{total} бараа</span>
+        </div>
+
         <div className="space-y-2">
           {products.map((p) => (
-            <div key={p.id} className="card flex items-center gap-3 p-3">
+            <div key={p.id} className={`card flex items-center gap-3 p-3 ${p.is_active ? "" : "opacity-60"}`}>
               <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#F5F5F5]">
                 {p.images[0] && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -108,13 +200,37 @@ export default function AdminProducts() {
                 )}
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium">{p.title_mn}</div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  {p.title_mn}
+                  {!p.is_active && (
+                    <span className="rounded bg-line px-1.5 py-0.5 text-[10px] text-muted">Идэвхгүй</span>
+                  )}
+                </div>
                 <div className="text-xs text-muted">{p.brand} • {jpy(p.base_price_jpy)} • {p.weight_grams}г</div>
               </div>
-              <button className="text-xs text-accent" onClick={() => remove(p.id)}>Идэвхгүй</button>
+              {p.is_active ? (
+                <button className="text-xs text-accent" onClick={() => setActiveState(p.id, false)}>Идэвхгүй</button>
+              ) : (
+                <button className="text-xs text-emerald-600" onClick={() => setActiveState(p.id, true)}>Идэвхжүүлэх</button>
+              )}
             </div>
           ))}
+          {products.length === 0 && (
+            <div className="py-10 text-center text-sm text-muted">Бараа олдсонгүй</div>
+          )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+            <button className="btn-outline px-3 py-1.5 disabled:opacity-40" onClick={() => setPage((p) => p - 1)} disabled={page <= 1}>
+              ← Өмнөх
+            </button>
+            <span className="text-muted">{page} / {totalPages}</span>
+            <button className="btn-outline px-3 py-1.5 disabled:opacity-40" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages}>
+              Дараах →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

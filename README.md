@@ -149,6 +149,17 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   build buyer trust. All status side-effects are centralised in
   `services/notifications.record_order_event`.
 
+## Admin / operations
+
+- **Dashboard** — today's & this-month revenue/orders, pending-payment count,
+  average margin, active product count, open-box fill, plus an order
+  status-breakdown bar chart (`GET /admin/dashboard`).
+- **Product management** — admin catalogue list (`GET /admin/products`,
+  includes inactive) with search (name/brand/SKU), category & active filters,
+  and pagination; soft-delete + one-click reactivate.
+- **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
+  per-row error reporting; UI on the admin products page.
+
 ## Roadmap hooks (left intentionally open)
 
 - Real SMS provider for OTP (`SMS_PROVIDER`).

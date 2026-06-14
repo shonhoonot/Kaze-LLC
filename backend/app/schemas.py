@@ -353,12 +353,22 @@ class OrderStatusUpdate(BaseModel):
 
 
 # ───────────── dashboard ─────────────
+class StatusCountOut(BaseModel):
+    status: OrderStatus
+    count: int
+
+
 class DashboardOut(BaseModel):
     orders_today: int
     revenue_today_mnt: int
     avg_margin_per_order_jpy: int
     boxes_this_month: int
     open_box_fill_percent: float
+    pending_orders: int = 0
+    orders_this_month: int = 0
+    revenue_month_mnt: int = 0
+    active_products: int = 0
+    status_counts: list[StatusCountOut] = []
 
 
 TokenResponse.model_rebuild()

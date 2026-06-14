@@ -37,8 +37,10 @@ from app.schemas import (
     PricingRuleIn,
     PricingRuleOut,
     ProductIn,
+    ProductListOut,
     ProductOut,
     ProductUpdate,
+    StatusCountOut,
 )
 from app.services.boxes import box_fill_payload, get_open_box
 from app.services.notifications import record_order_event
@@ -124,6 +126,44 @@ def import_products_csv(
             errors.append(f"мөр {i}: {exc}")
     db.commit()
     return {"created": created, "errors": errors}
+
+
+@router.get("/products", response_model=ProductListOut)
+def admin_list_products(
+    q: str | None = None,
+    category_id: int | None = None,
+    active: str = "all",  # all | active | inactive
+    page: int = 1,
+    page_size: int = 30,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    """Admin catalogue — unlike the public list, includes inactive products."""
+    stmt = select(Product)
+    if q:
+        like = f"%{q.strip()}%"
+        stmt = stmt.where(
+            Product.title_mn.ilike(like)
+            | Product.title_ja.ilike(like)
+            | Product.brand.ilike(like)
+            | Product.sku.ilike(like)
+        )
+    if category_id:
+        stmt = stmt.where(Product.category_id == category_id)
+    if active == "active":
+        stmt = stmt.where(Product.is_active.is_(True))
+    elif active == "inactive":
+        stmt = stmt.where(Product.is_active.is_(False))
+
+    total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    page_size = max(1, min(page_size, 100))
+    rows = db.scalars(
+        stmt.options(selectinload(Product.images))
+        .order_by(Product.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return ProductListOut(items=rows, total=total, page=page, page_size=page_size)
 
 
 # ─────────────── pricing rules ───────────────
@@ -314,10 +354,37 @@ def dashboard(db: Session = Depends(get_db), _: User = Depends(require_staff)):
     open_box = get_open_box(db)
     fill = box_fill_payload(open_box)
 
+    pending_orders = db.scalar(
+        select(func.count()).select_from(Order).where(
+            Order.payment_status == PaymentStatus.unpaid,
+            Order.status.notin_((OrderStatus.CANCELLED, OrderStatus.REFUNDED)),
+        )
+    ) or 0
+    orders_month = db.scalar(
+        select(func.count()).select_from(Order).where(Order.created_at >= start_month)
+    ) or 0
+    revenue_month = db.scalar(
+        select(func.coalesce(func.sum(Order.total_mnt), 0)).where(
+            Order.created_at >= start_month, Order.payment_status == PaymentStatus.paid
+        )
+    ) or 0
+    active_products = db.scalar(
+        select(func.count()).select_from(Product).where(Product.is_active.is_(True))
+    ) or 0
+    rows = db.execute(
+        select(Order.status, func.count()).group_by(Order.status)
+    ).all()
+    status_counts = [StatusCountOut(status=s, count=c) for s, c in rows]
+
     return DashboardOut(
         orders_today=orders_today,
         revenue_today_mnt=int(revenue_today),
         avg_margin_per_order_jpy=int(avg_margin),
         boxes_this_month=boxes_month,
         open_box_fill_percent=fill["fill_percent"],
+        pending_orders=pending_orders,
+        orders_this_month=orders_month,
+        revenue_month_mnt=int(revenue_month),
+        active_products=active_products,
+        status_counts=status_counts,
     )
