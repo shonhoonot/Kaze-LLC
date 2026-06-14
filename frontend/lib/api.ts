@@ -7,6 +7,7 @@ import type {
   User,
   BoxFill,
   Wishlist,
+  NotificationList,
 } from "./types";
 
 const BASE =
@@ -100,6 +101,13 @@ export const Api = {
     api<Cart>(`/cart/items/${id}`, { method: "PATCH", body }),
   removeCartItem: (id: number) => api<Cart>(`/cart/items/${id}`, { method: "DELETE" }),
 
+  // notifications
+  notifications: () => api<NotificationList>("/notifications"),
+  markNotificationRead: (id: number) =>
+    api<NotificationList>(`/notifications/${id}/read`, { method: "POST" }),
+  markAllNotificationsRead: () =>
+    api<NotificationList>("/notifications/read-all", { method: "POST" }),
+
   // wishlist
   wishlist: () => api<Wishlist>("/wishlist"),
   addWishlist: (productId: number) => api<Wishlist>(`/wishlist/${productId}`, { method: "POST" }),
@@ -166,6 +174,8 @@ export const AdminApi = {
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),
   updateOrderStatus: (id: number, status: string, note?: string) =>
     api<Order>(`/admin/orders/${id}/status`, { method: "PATCH", body: { status, note } }),
+  addOrderPhoto: (id: number, url: string, caption?: string) =>
+    api<Order>(`/admin/orders/${id}/photos`, { method: "POST", body: { url, caption } }),
   boxes: () => api<Box[]>("/admin/boxes"),
   createBox: () => api<Box>("/admin/boxes", { method: "POST" }),
   addBoxItem: (boxId: number, order_id: number, bag_label?: string) =>

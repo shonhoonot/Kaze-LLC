@@ -15,8 +15,9 @@ from app.models import (
     Box,
     BoxItem,
     BoxStatus,
+    Notification,
     Order,
-    OrderEvent,
+    OrderPhoto,
     OrderStatus,
     PaymentStatus,
     PricingRule,
@@ -31,6 +32,7 @@ from app.schemas import (
     BoxOut,
     DashboardOut,
     OrderOut,
+    OrderPhotoIn,
     OrderStatusUpdate,
     PricingRuleIn,
     PricingRuleOut,
@@ -39,6 +41,7 @@ from app.schemas import (
     ProductUpdate,
 )
 from app.services.boxes import box_fill_payload, get_open_box
+from app.services.notifications import record_order_event
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -163,7 +166,11 @@ def list_all_orders(
     db: Session = Depends(get_db),
     _: User = Depends(require_staff),
 ):
-    stmt = select(Order).options(selectinload(Order.items), selectinload(Order.events))
+    stmt = select(Order).options(
+        selectinload(Order.items),
+        selectinload(Order.events),
+        selectinload(Order.photos),
+    )
     if status:
         stmt = stmt.where(Order.status == status)
     return db.scalars(stmt.order_by(Order.created_at.desc())).all()
@@ -182,7 +189,31 @@ def update_order_status(
     order.status = body.status
     if body.status == OrderStatus.PAID and order.payment_status != PaymentStatus.paid:
         order.payment_status = PaymentStatus.paid
-    order.events.append(OrderEvent(status=body.status, note=body.note))
+    record_order_event(db, order, body.status, note=body.note)
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+@router.post("/orders/{order_id}/photos", response_model=OrderOut)
+def add_order_photo(
+    order_id: int,
+    body: OrderPhotoIn,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    order = db.get(Order, order_id)
+    if order is None:
+        raise HTTPException(404, "Захиалга олдсонгүй")
+    order.photos.append(OrderPhoto(url=body.url, caption=body.caption))
+    db.add(
+        Notification(
+            user_id=order.user_id,
+            order_id=order.id,
+            title="Шинэ зураг нэмэгдлээ",
+            body=body.caption or "Таны захиалгын барааны зураг агуулахаас нэмэгдлээ.",
+        )
+    )
     db.commit()
     db.refresh(order)
     return order
@@ -235,7 +266,7 @@ def add_box_item(
     box.status = BoxStatus.PACKING
     if order.status in (OrderStatus.PAID, OrderStatus.PURCHASING_IN_JP, OrderStatus.RECEIVED_AT_JP_WAREHOUSE):
         order.status = OrderStatus.PACKED
-        order.events.append(OrderEvent(status=OrderStatus.PACKED, note=f"Хайрцаг {box.code}-д савлагдсан"))
+        record_order_event(db, order, OrderStatus.PACKED, note=f"Хайрцаг {box.code}-д савлагдсан")
     db.commit()
     db.refresh(box)
     return box
@@ -252,9 +283,7 @@ def ship_box(box_id: int, db: Session = Depends(get_db), _: User = Depends(requi
     for item in box.items:
         order = item.order
         order.status = OrderStatus.SHIPPED_CARGO
-        order.events.append(
-            OrderEvent(status=OrderStatus.SHIPPED_CARGO, note=f"Далайн ачаагаар явсан ({box.code})")
-        )
+        record_order_event(db, order, OrderStatus.SHIPPED_CARGO, note=f"Далайн ачаагаар явсан ({box.code})")
     db.commit()
     db.refresh(box)
     return box

@@ -103,6 +103,35 @@ export default function OrderDetailPage() {
 
         <h2 className="mb-3 mt-6 font-semibold">Хүргэлтийн төлөв</h2>
         <OrderTracker status={order.status} events={order.events} />
+
+        {order.photos && order.photos.length > 0 && (
+          <>
+            <h2 className="mb-3 mt-6 font-semibold">Агуулахын зураг</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {order.photos.map((ph) => (
+                <a
+                  key={ph.id}
+                  href={ph.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="card group block overflow-hidden"
+                  title={ph.caption || ""}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ph.url}
+                    alt={ph.caption || "Захиалгын зураг"}
+                    loading="lazy"
+                    className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  {ph.caption && (
+                    <div className="truncate px-2 py-1 text-[11px] text-muted">{ph.caption}</div>
+                  )}
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* summary */}

@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "./CartProvider";
+import { useNotifications } from "./NotificationProvider";
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { count } = useCart();
+  const { unread } = useNotifications();
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,6 +27,16 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {user && (
+            <Link href="/notifications" className="relative rounded-full p-2 hover:bg-line/50" aria-label="Мэдэгдэл">
+              🔔
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-white">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </Link>
+          )}
           <Link href="/wishlist" className="rounded-full p-2 text-lg hover:bg-line/50" aria-label="Хадгалсан">
             ♡
           </Link>
@@ -68,6 +80,11 @@ export default function Header() {
             <Link href="/category/electronics" className="py-2" onClick={() => setOpen(false)}>Цахилгаан</Link>
             <Link href="/how-it-works" className="py-2" onClick={() => setOpen(false)}>Хэрхэн ажилладаг</Link>
             <Link href="/orders" className="py-2" onClick={() => setOpen(false)}>Миний захиалга</Link>
+            {user && (
+              <Link href="/notifications" className="py-2" onClick={() => setOpen(false)}>
+                Мэдэгдэл{unread > 0 ? ` (${unread})` : ""}
+              </Link>
+            )}
             {!user && (
               <Link href="/login" className="py-2 font-medium text-accent" onClick={() => setOpen(false)}>
                 Нэвтрэх

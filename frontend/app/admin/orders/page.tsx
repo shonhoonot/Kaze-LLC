@@ -23,6 +23,14 @@ export default function AdminOrders() {
     await load();
   }
 
+  async function attachPhoto(o: Order) {
+    const url = window.prompt("Зургийн URL:");
+    if (!url) return;
+    const caption = window.prompt("Тайлбар (заавал биш):") || undefined;
+    await AdminApi.addOrderPhoto(o.id, url, caption);
+    await load();
+  }
+
   // group by status (kanban)
   const columns = ORDER_PIPELINE.map((status) => ({
     status,
@@ -48,11 +56,17 @@ export default function AdminOrders() {
                   </div>
                   <div className="text-xs text-muted">{o.items.length} бараа • {(o.est_weight_grams / 1000).toFixed(1)}кг</div>
                   <div className="text-[11px] text-muted">{o.payment_status === "paid" ? "✓ Төлсөн" : "Төлбөр хүлээгдэж буй"}</div>
+                  {o.photos && o.photos.length > 0 && (
+                    <div className="mt-1 text-[11px] text-muted">📷 {o.photos.length} зураг</div>
+                  )}
                   {col.status !== "DELIVERED" && (
                     <button className="btn-outline mt-2 w-full py-1.5 text-xs" onClick={() => advance(o)}>
                       Дараагийн төлөв →
                     </button>
                   )}
+                  <button className="mt-1 w-full py-1 text-[11px] text-muted hover:text-ink" onClick={() => attachPhoto(o)}>
+                    + Зураг нэмэх
+                  </button>
                 </div>
               ))}
             </div>

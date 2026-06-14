@@ -106,6 +106,27 @@ export interface OrderEvent {
   created_at: string;
 }
 
+export interface OrderPhoto {
+  id: number;
+  url: string;
+  caption: string | null;
+  created_at: string;
+}
+
+export interface Notification {
+  id: number;
+  order_id: number | null;
+  title: string;
+  body: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationList {
+  items: Notification[];
+  unread: number;
+}
+
 export interface Order {
   id: number;
   status: string;
@@ -123,6 +144,7 @@ export interface Order {
   created_at: string;
   items: OrderItem[];
   events: OrderEvent[];
+  photos: OrderPhoto[];
 }
 
 export interface User {

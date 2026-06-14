@@ -97,8 +97,8 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
 ## Key routes
 
 **Customer:** `/` · `/category/[slug]` (filter + sort) · `/product/[id]` · `/cart` ·
-`/checkout` · `/orders` · `/orders/[id]` · `/account` · `/wishlist` · `/login` ·
-`/how-it-works` · `/faq` · `/shipping-info`
+`/checkout` · `/orders` · `/orders/[id]` · `/account` · `/wishlist` ·
+`/notifications` · `/login` · `/how-it-works` · `/faq` · `/shipping-info`
 
 **Admin/staff:** `/admin` (dashboard) · `/admin/products` · `/admin/pricing` ·
 `/admin/orders` (kanban) · `/admin/boxes` (consolidation tool)
@@ -135,6 +135,19 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
 - **Referral program** — each user gets a code + shareable link
   (`/login?ref=CODE`); referrer earns credit, referee gets a one-time
   service-fee discount on their first order.
+
+## Order tracking & trust features
+
+- **Status timeline** — every order advance (placed → paid → purchasing →
+  received → packed → shipped → arrived → delivered) writes an `OrderEvent`,
+  rendered as a vertical tracker on the order detail page.
+- **In-app notifications** — each status change (and warehouse photo) creates a
+  `Notification`; customers see a 🔔 bell with an unread badge (polled every
+  60s) and a `/notifications` feed (`/notifications` API + mark-read).
+- **Warehouse photos** — staff attach proof photos to an order
+  (`POST /admin/orders/{id}/photos`); shown as a gallery on the order page to
+  build buyer trust. All status side-effects are centralised in
+  `services/notifications.record_order_event`.
 
 ## Roadmap hooks (left intentionally open)
 

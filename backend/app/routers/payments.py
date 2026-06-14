@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Order, OrderEvent, OrderStatus, PaymentStatus, User
+from app.models import Order, OrderStatus, PaymentStatus, User
 from app.schemas import QPayCallback, QPayInvoiceCreate, QPayInvoiceOut
+from app.services.notifications import record_order_event
 from app.services.payments import get_payment_provider
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -64,6 +65,6 @@ def qpay_callback(body: QPayCallback, db: Session = Depends(get_db)):
         order.payment_status = PaymentStatus.paid
         if order.status == OrderStatus.PLACED:
             order.status = OrderStatus.PAID
-            order.events.append(OrderEvent(status=OrderStatus.PAID, note="Төлбөр баталгаажсан"))
+            record_order_event(db, order, OrderStatus.PAID)
     db.commit()
     return {"ok": True}

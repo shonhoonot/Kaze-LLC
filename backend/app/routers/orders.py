@@ -11,13 +11,13 @@ from app.models import (
     Cart,
     CartStatus,
     Order,
-    OrderEvent,
     OrderItem,
     OrderStatus,
     User,
 )
 from app.pricing import price_cart
 from app.schemas import OrderCreate, OrderOut
+from app.services.notifications import record_order_event
 from app.services.pricing_service import get_global_rule, price_product_line
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -83,11 +83,12 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         delivery_phone=body.delivery_phone,
     )
     order.items = order_items
-    placed_note = "Захиалга үүсгэгдсэн"
-    if referee_discount_jpy:
-        placed_note += f" (урамшууллын хөнгөлөлт ¥{referee_discount_jpy})"
-    order.events = [OrderEvent(status=OrderStatus.PLACED, note=placed_note)]
     db.add(order)
+    db.flush()  # assign order.id before linking the notification
+    placed_note = None
+    if referee_discount_jpy:
+        placed_note = f"Урамшууллын хөнгөлөлт ¥{referee_discount_jpy} хэрэглэгдсэн"
+    record_order_event(db, order, OrderStatus.PLACED, note=placed_note)
 
     cart.status = CartStatus.converted
     db.commit()
@@ -100,7 +101,11 @@ def list_orders(db: Session = Depends(get_db), user: User = Depends(get_current_
     return db.scalars(
         select(Order)
         .where(Order.user_id == user.id)
-        .options(selectinload(Order.items), selectinload(Order.events))
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.events),
+            selectinload(Order.photos),
+        )
         .order_by(Order.created_at.desc())
     ).all()
 

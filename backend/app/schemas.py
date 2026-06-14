@@ -237,6 +237,19 @@ class OrderEventOut(BaseModel):
     created_at: datetime
 
 
+class OrderPhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    url: str
+    caption: str | None
+    created_at: datetime
+
+
+class OrderPhotoIn(BaseModel):
+    url: str
+    caption: str | None = None
+
+
 class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -255,6 +268,23 @@ class OrderOut(BaseModel):
     created_at: datetime
     items: list[OrderItemOut] = []
     events: list[OrderEventOut] = []
+    photos: list[OrderPhotoOut] = []
+
+
+# ───────────── notifications ─────────────
+class NotificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    order_id: int | None
+    title: str
+    body: str | None
+    is_read: bool
+    created_at: datetime
+
+
+class NotificationListOut(BaseModel):
+    items: list[NotificationOut]
+    unread: int
 
 
 # ───────────── pricing rules (admin) ─────────────
