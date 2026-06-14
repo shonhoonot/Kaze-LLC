@@ -127,6 +127,23 @@ class ProductListOut(BaseModel):
     page_size: int
 
 
+class ProductScrapeIn(BaseModel):
+    url: str
+
+
+class ProductScrapeOut(BaseModel):
+    source: ProductSource
+    source_url: str
+    title_ja: str | None = None
+    title_mn: str | None = None
+    brand: str | None = None
+    base_price_jpy: int | None = None
+    image_url: str | None = None
+    weight_grams: int = 500
+    fetched: bool = False
+    note: str | None = None
+
+
 class ProductImageIn(BaseModel):
     url: str
     sort_order: int = 0

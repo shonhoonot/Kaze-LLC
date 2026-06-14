@@ -159,6 +159,11 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **URL product sourcing** — paste a Japanese product URL
+  (`POST /admin/products/scrape`) to auto-fill title / price / image / brand
+  from JSON-LD + OpenGraph tags. Dependency-free (`services/scraper`), source
+  guessed from the domain, and degrades gracefully when the network is blocked
+  or a page is bot-walled — the admin reviews/edits before saving.
 
 ## Roadmap hooks (left intentionally open)
 

@@ -39,11 +39,14 @@ from app.schemas import (
     ProductIn,
     ProductListOut,
     ProductOut,
+    ProductScrapeIn,
+    ProductScrapeOut,
     ProductUpdate,
     StatusCountOut,
 )
 from app.services.boxes import box_fill_payload, get_open_box
 from app.services.notifications import record_order_event
+from app.services.scraper import fetch_product
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -86,6 +89,21 @@ def delete_product(product_id: int, db: Session = Depends(get_db), _: User = Dep
     # soft-delete to preserve order history integrity
     product.is_active = False
     db.commit()
+
+
+@router.post("/products/scrape", response_model=ProductScrapeOut)
+def scrape_product(
+    body: ProductScrapeIn,
+    _: User = Depends(require_staff),
+):
+    """Best-effort pull of title/price/image/brand from a Japanese product URL.
+
+    Does not save anything — the admin reviews/edits, then submits the form.
+    """
+    url = body.url.strip()
+    if not url.lower().startswith(("http://", "https://")):
+        raise HTTPException(400, "Зөв http(s) холбоос оруулна уу")
+    return ProductScrapeOut(**fetch_product(url))
 
 
 @router.post("/products/import")

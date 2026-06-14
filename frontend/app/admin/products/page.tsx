@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Api, AdminApi } from "@/lib/api";
-import type { ImportResult } from "@/lib/api";
+import type { ImportResult, ScrapedProduct } from "@/lib/api";
 import type { Category, Product } from "@/lib/types";
 import { jpy } from "@/lib/format";
 
@@ -26,6 +26,11 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
+
+  // url sourcing
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scraping, setScraping] = useState(false);
+  const [scrapeNote, setScrapeNote] = useState<string | null>(null);
 
   // list controls
   const [q, setQ] = useState("");
@@ -85,6 +90,36 @@ export default function AdminProducts() {
     }
   }
 
+  async function scrapeFromUrl() {
+    const url = scrapeUrl.trim();
+    if (!url) return;
+    setScraping(true);
+    setScrapeNote(null);
+    try {
+      const r: ScrapedProduct = await AdminApi.scrapeProduct(url);
+      setForm((f) => ({
+        ...f,
+        title_mn: r.title_mn || f.title_mn,
+        title_ja: r.title_ja || f.title_ja,
+        brand: r.brand || f.brand,
+        source: r.source || f.source,
+        source_url: r.source_url || url,
+        base_price_jpy: r.base_price_jpy != null ? String(r.base_price_jpy) : f.base_price_jpy,
+        image_url: r.image_url || f.image_url,
+      }));
+      setScrapeNote(
+        r.note ||
+          (r.fetched
+            ? "Мэдээлэл татагдлаа — доороос шалгаад нэрээ орчуулаад нэмнэ үү."
+            : "Татаж чадсангүй — гараар бөглөнө үү.")
+      );
+    } catch {
+      setScrapeNote("Холбоосыг боловсруулж чадсангүй.");
+    } finally {
+      setScraping(false);
+    }
+  }
+
   async function setActiveState(id: number, value: boolean) {
     await AdminApi.updateProduct(id, { is_active: value });
     await load();
@@ -113,9 +148,30 @@ export default function AdminProducts() {
       <div className="space-y-6 lg:col-span-1">
         <div className="card p-5">
           <h2 className="mb-3 font-semibold">Бараа нэмэх</h2>
-          <p className="mb-3 text-xs text-muted">
-            Amazon JP / Uniqlo / GU холбоосыг буулгаад гар аргаар нэр, үнэ, жин, зургаа оруулна.
-          </p>
+
+          {/* URL sourcing */}
+          <div className="mb-3 rounded-xl bg-[#FAFAFA] p-3">
+            <label className="text-xs font-medium text-ink">Япон холбоосоор автоматаар татах</label>
+            <div className="mt-2 flex gap-2">
+              <input
+                className="input flex-1"
+                placeholder="https://www.amazon.co.jp/dp/..."
+                value={scrapeUrl}
+                onChange={(e) => setScrapeUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && scrapeFromUrl()}
+              />
+              <button className="btn-outline shrink-0 px-3 text-sm" onClick={scrapeFromUrl} disabled={scraping || !scrapeUrl.trim()}>
+                {scraping ? "..." : "Татах"}
+              </button>
+            </div>
+            {scrapeNote && <p className="mt-2 text-[11px] text-muted">{scrapeNote}</p>}
+          </div>
+
+          {form.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image_url} alt="" className="mb-3 h-28 w-full rounded-lg object-cover" />
+          )}
+
           <div className="space-y-2">
             <input className="input" placeholder="Гарчиг (MN)" value={form.title_mn} onChange={(e) => setForm({ ...form, title_mn: e.target.value })} />
             <input className="input" placeholder="Гарчиг (JA)" value={form.title_ja} onChange={(e) => setForm({ ...form, title_ja: e.target.value })} />

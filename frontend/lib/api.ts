@@ -179,9 +179,24 @@ export interface ImportResult {
   errors: string[];
 }
 
+export interface ScrapedProduct {
+  source: string;
+  source_url: string;
+  title_ja: string | null;
+  title_mn: string | null;
+  brand: string | null;
+  base_price_jpy: number | null;
+  image_url: string | null;
+  weight_grams: number;
+  fetched: boolean;
+  note: string | null;
+}
+
 export const AdminApi = {
   dashboard: () => api<Dashboard>("/admin/dashboard"),
   products: (qs = "") => api<ProductList>(`/admin/products${qs ? `?${qs}` : ""}`),
+  scrapeProduct: (url: string) =>
+    api<ScrapedProduct>("/admin/products/scrape", { method: "POST", body: { url } }),
   createProduct: (body: unknown) => api<Product>("/admin/products", { method: "POST", body }),
   updateProduct: (id: number, body: unknown) => api<Product>(`/admin/products/${id}`, { method: "PATCH", body }),
   deleteProduct: (id: number) => api<void>(`/admin/products/${id}`, { method: "DELETE" }),
