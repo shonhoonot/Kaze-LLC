@@ -54,6 +54,14 @@ export interface BoxFill {
   capacity_grams: number;
   fill_percent: number;
   remaining_grams: number;
+  est_days_to_full?: number | null;
+  est_ship_date?: string | null;
+  est_arrival_date?: string | null;
+}
+
+export interface Wishlist {
+  product_ids: number[];
+  items: Product[];
 }
 
 export interface CartLine {

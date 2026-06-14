@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth import get_current_user
@@ -21,6 +21,8 @@ from app.schemas import OrderCreate, OrderOut
 from app.services.pricing_service import get_global_rule, price_product_line
 
 router = APIRouter(prefix="/orders", tags=["orders"])
+
+REFEREE_DISCOUNT_JPY = 400  # one-time first-order service-fee discount
 
 
 @router.post("", response_model=OrderOut, status_code=201)
@@ -53,22 +55,38 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
 
     agg = price_cart(priced, fx_rate_jpy_mnt=fx)
 
+    # First-order referral discount: referee gets a one-time service-fee cut.
+    referee_discount_jpy = 0
+    if user.referred_by:
+        prior_orders = db.scalar(
+            select(func.count()).select_from(Order).where(Order.user_id == user.id)
+        ) or 0
+        if prior_orders == 0:
+            referee_discount_jpy = min(REFEREE_DISCOUNT_JPY, agg.service_fee_jpy)
+
+    service_fee_jpy = agg.service_fee_jpy - referee_discount_jpy
+    total_jpy = agg.total_jpy - referee_discount_jpy
+    total_mnt = round(total_jpy * fx)
+
     order = Order(
         user_id=user.id,
         status=OrderStatus.PLACED,
         subtotal_jpy=agg.subtotal_jpy,
         markup_jpy=agg.markup_jpy,
-        service_fee_jpy=agg.service_fee_jpy,
+        service_fee_jpy=service_fee_jpy,
         est_weight_grams=agg.est_weight_grams,
         shipping_fee_jpy=agg.shipping_fee_jpy,
-        total_jpy=agg.total_jpy,
-        total_mnt=agg.total_mnt,
-        fx_rate_used=agg.fx_rate_used,
+        total_jpy=total_jpy,
+        total_mnt=total_mnt,
+        fx_rate_used=fx,
         delivery_address=body.delivery_address,
         delivery_phone=body.delivery_phone,
     )
     order.items = order_items
-    order.events = [OrderEvent(status=OrderStatus.PLACED, note="Захиалга үүсгэгдсэн")]
+    placed_note = "Захиалга үүсгэгдсэн"
+    if referee_discount_jpy:
+        placed_note += f" (урамшууллын хөнгөлөлт ¥{referee_discount_jpy})"
+    order.events = [OrderEvent(status=OrderStatus.PLACED, note=placed_note)]
     db.add(order)
 
     cart.status = CartStatus.converted

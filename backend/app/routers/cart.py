@@ -65,11 +65,7 @@ def _build_cart_out(db: Session, cart: Cart) -> CartOut:
 
     # box-fill: projected if this cart's weight were added to the open box
     open_box = get_open_box(db)
-    fill = box_fill_payload(open_box)
-    projected = fill["current_weight_grams"] + agg.est_weight_grams
-    fill["current_weight_grams"] = projected
-    fill["remaining_grams"] = max(fill["capacity_grams"] - projected, 0)
-    fill["fill_percent"] = round(min(projected / fill["capacity_grams"] * 100, 100), 1)
+    fill = box_fill_payload(open_box, extra_grams=agg.est_weight_grams)
 
     return CartOut(
         id=cart.id,

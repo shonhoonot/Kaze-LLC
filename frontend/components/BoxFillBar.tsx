@@ -24,6 +24,11 @@ export default function BoxFillBar({ fill, compact }: { fill: BoxFill; compact?:
           ? ". Хайрцаг дүүрмэгц Монгол руу явна — одоо захиалбал хурдан хүрнэ!"
           : ". Хайрцаг дүүрсэн — удахгүй явна!"}
       </div>
+      {fill.est_arrival_date && (
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-accent-light px-3 py-2 text-xs text-accent-dark">
+          🚢 <span>Ойролцоогоор <b>{fill.est_arrival_date}</b>-нд Монголд хүрнэ</span>
+        </div>
+      )}
     </div>
   );
 }

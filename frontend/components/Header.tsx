@@ -25,6 +25,9 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link href="/wishlist" className="rounded-full p-2 text-lg hover:bg-line/50" aria-label="Хадгалсан">
+            ♡
+          </Link>
           <Link href="/cart" className="relative rounded-full p-2 hover:bg-line/50" aria-label="Сагс">
             🛒
             {count > 0 && (

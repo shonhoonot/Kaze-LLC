@@ -6,6 +6,7 @@ import type {
   ProductList,
   User,
   BoxFill,
+  Wishlist,
 } from "./types";
 
 const BASE =
@@ -98,6 +99,11 @@ export const Api = {
   updateCartItem: (id: number, body: { qty?: number; bag_note?: string }) =>
     api<Cart>(`/cart/items/${id}`, { method: "PATCH", body }),
   removeCartItem: (id: number) => api<Cart>(`/cart/items/${id}`, { method: "DELETE" }),
+
+  // wishlist
+  wishlist: () => api<Wishlist>("/wishlist"),
+  addWishlist: (productId: number) => api<Wishlist>(`/wishlist/${productId}`, { method: "POST" }),
+  removeWishlist: (productId: number) => api<Wishlist>(`/wishlist/${productId}`, { method: "DELETE" }),
 
   // orders
   createOrder: (delivery_address: string, delivery_phone: string) =>

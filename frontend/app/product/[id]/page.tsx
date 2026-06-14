@@ -6,11 +6,13 @@ import { Api, getToken } from "@/lib/api";
 import type { Product } from "@/lib/types";
 import { mnt, jpy, kg } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
+import { useWishlist } from "@/components/WishlistProvider";
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { refresh } = useCart();
+  const { has, toggle } = useWishlist();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [activeImg, setActiveImg] = useState(0);
@@ -119,9 +121,20 @@ export default function ProductPage() {
           onChange={(e) => setNote(e.target.value)}
         />
 
-        <button onClick={addToCart} disabled={adding} className="btn-primary mt-4 w-full">
-          {added ? "Сагсанд нэмэгдлээ ✓" : adding ? "Нэмж байна..." : "Сагсанд нэмэх"}
-        </button>
+        <div className="mt-4 flex gap-3">
+          <button onClick={addToCart} disabled={adding} className="btn-primary flex-1">
+            {added ? "Сагсанд нэмэгдлээ ✓" : adding ? "Нэмж байна..." : "Сагсанд нэмэх"}
+          </button>
+          <button
+            onClick={() => toggle(product.id)}
+            aria-label="Хадгалах"
+            className="btn-outline px-5 text-lg"
+          >
+            <span className={has(product.id) ? "text-accent" : "text-muted"}>
+              {has(product.id) ? "♥" : "♡"}
+            </span>
+          </button>
+        </div>
 
         {product.source_url && (
           <a href={product.source_url} target="_blank" rel="noreferrer" className="mt-3 block text-center text-xs text-muted underline">

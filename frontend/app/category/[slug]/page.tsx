@@ -17,6 +17,7 @@ export default function CategoryPage() {
   const [brand, setBrand] = useState(initialBrand);
   const [q, setQ] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState("new");
 
   const slug = params.slug;
   const category = categories.find((c) => c.slug === slug);
@@ -27,14 +28,14 @@ export default function CategoryPage() {
 
   useEffect(() => {
     setLoading(true);
-    const qs = new URLSearchParams({ category: slug, page: "1", page_size: "48" });
+    const qs = new URLSearchParams({ category: slug, page: "1", page_size: "48", sort });
     if (brand) qs.set("brand", brand);
     if (q) qs.set("q", q);
     if (maxPrice) qs.set("max_price_jpy", maxPrice);
     Api.products(qs.toString())
       .then((list) => setProducts(list.items))
       .finally(() => setLoading(false));
-  }, [slug, brand, q, maxPrice]);
+  }, [slug, brand, q, maxPrice, sort]);
 
   const brands = Array.from(new Set(products.map((p) => p.brand).filter(Boolean))) as string[];
 
@@ -62,6 +63,11 @@ export default function CategoryPage() {
           <option value="1000">¥1,000 хүртэл</option>
           <option value="3000">¥3,000 хүртэл</option>
           <option value="8000">¥8,000 хүртэл</option>
+        </select>
+        <select className="input max-w-[180px]" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="new">Шинэ нь эхэндээ</option>
+          <option value="price_asc">Үнэ: бага → их</option>
+          <option value="price_desc">Үнэ: их → бага</option>
         </select>
       </div>
 

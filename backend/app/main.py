@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import Base, engine, get_db
-from app.routers import admin, auth, cart, categories, orders, payments, products
+from app.routers import admin, auth, cart, categories, orders, payments, products, wishlist
 from app.schemas import BoxFillOut
 from app.services.boxes import box_fill_payload, get_open_box
 
@@ -56,6 +56,7 @@ app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(payments.router)
+app.include_router(wishlist.router)
 app.include_router(admin.router)
 
 if settings.storage_backend == "local":

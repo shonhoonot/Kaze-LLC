@@ -9,6 +9,7 @@ function LoginInner() {
   const router = useRouter();
   const search = useSearchParams();
   const next = search.get("next") || "/";
+  const ref = search.get("ref") || undefined;
   const { login } = useAuth();
 
   const [step, setStep] = useState<"phone" | "code">("phone");
@@ -37,7 +38,7 @@ function LoginInner() {
     setError("");
     setBusy(true);
     try {
-      const res = await Api.verifyOtp(phone, code, name || undefined);
+      const res = await Api.verifyOtp(phone, code, name || undefined, ref);
       login(res.access_token, res.user);
       router.push(next);
     } catch {
@@ -52,6 +53,12 @@ function LoginInner() {
       <div className="card w-full max-w-sm p-6">
         <h1 className="text-xl font-bold">Нэвтрэх / Бүртгүүлэх</h1>
         <p className="mt-1 text-sm text-muted">Утасны дугаараар нэвтэрнэ үү (+976).</p>
+
+        {ref && (
+          <div className="mt-3 rounded-lg bg-accent-light px-3 py-2 text-xs text-accent-dark">
+            🎁 <b>{ref}</b> урилгын кодоор бүртгүүлж байна — эхний захиалгад үйлчилгээний шимтгэлийн хөнгөлөлт авна!
+          </div>
+        )}
 
         {step === "phone" ? (
           <div className="mt-5 space-y-3">

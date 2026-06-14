@@ -193,6 +193,9 @@ class BoxFillOut(BaseModel):
     capacity_grams: int
     fill_percent: float
     remaining_grams: int
+    est_days_to_full: int | None = None
+    est_ship_date: str | None = None
+    est_arrival_date: str | None = None
 
 
 class CartOut(BaseModel):
@@ -329,3 +332,9 @@ class DashboardOut(BaseModel):
 
 
 TokenResponse.model_rebuild()
+
+
+# ───────────── wishlist ─────────────
+class WishlistOut(BaseModel):
+    product_ids: list[int]
+    items: list[ProductOut] = []

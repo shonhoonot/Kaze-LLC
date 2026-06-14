@@ -96,9 +96,9 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
 
 ## Key routes
 
-**Customer:** `/` · `/category/[slug]` · `/product/[id]` · `/cart` · `/checkout` ·
-`/orders` · `/orders/[id]` · `/account` · `/login` · `/how-it-works` · `/faq` ·
-`/shipping-info`
+**Customer:** `/` · `/category/[slug]` (filter + sort) · `/product/[id]` · `/cart` ·
+`/checkout` · `/orders` · `/orders/[id]` · `/account` · `/wishlist` · `/login` ·
+`/how-it-works` · `/faq` · `/shipping-info`
 
 **Admin/staff:** `/admin` (dashboard) · `/admin/products` · `/admin/pricing` ·
 `/admin/orders` (kanban) · `/admin/boxes` (consolidation tool)
@@ -124,6 +124,17 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
 - Object storage: `STORAGE_BACKEND=local` (served at `/uploads`) or `azure_blob`.
 - **Secrets** live in env vars / Key Vault — never hardcoded. See `.env.example`.
 - For production schema evolution, add Alembic migrations (v1 uses `create_all`).
+
+## Conversion / UX features
+
+- **Estimated ship & arrival date** — projected from the open box's fill rate
+  (`BOX_FILL_GRAMS_PER_DAY` + `JP_HANDLING_DAYS` + `SEA_TRANSIT_DAYS`); shown on
+  the home/cart box-fill bar to drive urgency.
+- **Wishlist** — save products (`♡`), view at `/wishlist` (`/wishlist` API).
+- **Sort** — products by newest / price asc / price desc.
+- **Referral program** — each user gets a code + shareable link
+  (`/login?ref=CODE`); referrer earns credit, referee gets a one-time
+  service-fee discount on their first order.
 
 ## Roadmap hooks (left intentionally open)
 

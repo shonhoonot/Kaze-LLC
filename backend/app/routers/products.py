@@ -28,6 +28,7 @@ def list_products(
     q: str | None = None,
     min_price_jpy: int | None = None,
     max_price_jpy: int | None = None,
+    sort: str = Query("new", description="new | price_asc | price_desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(24, ge=1, le=100),
 ):
@@ -49,10 +50,16 @@ def list_products(
     if max_price_jpy is not None:
         stmt = stmt.where(Product.base_price_jpy <= max_price_jpy)
 
+    order_by = {
+        "price_asc": Product.base_price_jpy.asc(),
+        "price_desc": Product.base_price_jpy.desc(),
+        "new": Product.created_at.desc(),
+    }.get(sort, Product.created_at.desc())
+
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = db.scalars(
         stmt.options(selectinload(Product.images))
-        .order_by(Product.created_at.desc())
+        .order_by(order_by)
         .offset((page - 1) * page_size)
         .limit(page_size)
     ).all()

@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     fx_live_api_url: str = ""
     fx_live_api_key: str = ""
 
+    # Shipping estimate (powers the "ачаа явах огноо" projection)
+    box_fill_grams_per_day: int = 1500  # avg weight added to the open box per day
+    jp_handling_days: int = 5           # buy + receive + pack time in Japan
+    sea_transit_days: int = 21          # JP → MN sea cargo transit
+
     # Payments
     qpay_base_url: str = "https://merchant.qpay.mn/v2"
     qpay_username: str = ""
