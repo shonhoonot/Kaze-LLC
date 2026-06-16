@@ -12,7 +12,16 @@ from app.auth import create_access_token, generate_otp, generate_referral_code, 
 from app.config import settings
 from app.database import get_db
 from app.models import OtpCode, User
-from app.schemas import OtpRequest, OtpRequestResponse, OtpVerify, TokenResponse, UserOut, UserUpdate
+from app.schemas import (
+    GoogleLogin,
+    OtpRequest,
+    OtpRequestResponse,
+    OtpVerify,
+    TokenResponse,
+    UserOut,
+    UserUpdate,
+)
+from app.services.google_auth import GoogleAuthError, verify_google_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 log = logging.getLogger("kaze.auth")
@@ -79,6 +88,42 @@ def verify_otp(body: OtpVerify, db: Session = Depends(get_db)):
             referrer = db.scalar(select(User).where(User.referral_code == body.referred_by))
             if referrer:
                 referrer.referral_credit_jpy += 400
+
+    db.commit()
+    db.refresh(user)
+    token = create_access_token(user.id)
+    return TokenResponse(access_token=token, user=UserOut.model_validate(user))
+
+
+@router.post("/google", response_model=TokenResponse)
+def google_login(body: GoogleLogin, db: Session = Depends(get_db)):
+    """Sign in with Google: verify the ID token, then link or create a user."""
+    try:
+        info = verify_google_token(body.id_token)
+    except GoogleAuthError as exc:
+        raise HTTPException(401, str(exc))
+    if not info["email_verified"]:
+        raise HTTPException(401, "Google и-мэйл баталгаажаагүй байна")
+
+    # Match by google_sub first, then fall back to an existing email account.
+    user = db.scalar(select(User).where(User.google_sub == info["sub"]))
+    if user is None and info["email"]:
+        user = db.scalar(select(User).where(User.email == info["email"]))
+    if user is None:
+        user = User(
+            email=info["email"],
+            name=info.get("name"),
+            google_sub=info["sub"],
+            referral_code=generate_referral_code(),
+        )
+        db.add(user)
+        db.flush()
+    else:
+        # link the Google identity to the existing account
+        if user.google_sub is None:
+            user.google_sub = info["sub"]
+        if not user.name and info.get("name"):
+            user.name = info["name"]
 
     db.commit()
     db.refresh(user)

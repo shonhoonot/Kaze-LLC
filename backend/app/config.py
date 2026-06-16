@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     otp_dev_mode: bool = True
     sms_provider: str = "stub"
 
+    # Google OAuth (Sign in with Google) — credentials configured later
+    google_client_id: str = ""
+
     # Pricing defaults (seed values; live values live in pricing_rules table)
     default_markup_percent: float = 0.10
     default_service_fee_per_item_jpy: int = 400

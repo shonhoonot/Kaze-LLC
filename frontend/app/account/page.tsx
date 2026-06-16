@@ -120,7 +120,7 @@ export default function AccountPage() {
             </div>
             <div className="space-y-2">
               <Field label="Нэр" value={user.name || "—"} />
-              <Field label="Утас" value={user.phone} />
+              <Field label="Утас" value={user.phone || "—"} />
               <Field label="И-мэйл" value={user.email || "—"} />
               <Field label="Хот / Дүүрэг" value={[user.city, user.district].filter(Boolean).join(", ") || "—"} />
               <Field label="Хаяг" value={user.default_address || "—"} />

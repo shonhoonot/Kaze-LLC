@@ -95,6 +95,12 @@ export const Api = {
       auth: false,
       body: { phone, code, name, referred_by },
     }),
+  googleLogin: (id_token: string) =>
+    api<{ access_token: string; user: User }>("/auth/google", {
+      method: "POST",
+      auth: false,
+      body: { id_token },
+    }),
   me: () => api<User>("/auth/me"),
   updateProfile: (body: unknown) => api<User>("/auth/me", { method: "PATCH", body }),
 

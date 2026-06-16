@@ -103,8 +103,9 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str | None] = mapped_column(String(120))
-    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
+    google_sub: Mapped[str | None] = mapped_column(String(40), unique=True, index=True)
     password_hash: Mapped[str | None] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.customer)
     default_address: Mapped[str | None] = mapped_column(Text)

@@ -42,11 +42,15 @@ class TokenResponse(BaseModel):
     user: "UserOut"
 
 
+class GoogleLogin(BaseModel):
+    id_token: str
+
+
 class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str | None
-    phone: str
+    phone: str | None
     email: str | None
     role: UserRole
     default_address: str | None

@@ -159,6 +159,14 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Sign in with Google** — `POST /auth/google` verifies a Google ID token
+  (`services/google_auth`, lazy-imported) and links it to an existing email
+  account or creates a new one (phone is now optional; users carry a
+  `google_sub`). The login page shows a Google button via Google Identity
+  Services. Credentials (`GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID`)
+  are wired through config/env but left blank — set them later to enable; until
+  then the endpoint returns a clear "not configured" error and the button shows
+  a placeholder.
 - **Profile editing** — `PATCH /auth/me` lets a signed-in customer update
   name / email / city / district / default address (email normalised +
   uniqueness-checked); the account page has an inline edit form that refreshes

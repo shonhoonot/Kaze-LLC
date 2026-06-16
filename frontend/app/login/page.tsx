@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 function LoginInner() {
   const router = useRouter();
@@ -104,6 +105,20 @@ function LoginInner() {
         )}
 
         {error && <div className="mt-3 text-sm text-accent">{error}</div>}
+
+        <div className="my-5 flex items-center gap-3 text-xs text-muted">
+          <div className="h-px flex-1 bg-line" />
+          эсвэл
+          <div className="h-px flex-1 bg-line" />
+        </div>
+
+        <GoogleSignInButton
+          onSuccess={(token, user) => {
+            login(token, user);
+            router.push(next);
+          }}
+          onError={(m) => setError(m)}
+        />
       </div>
     </div>
   );

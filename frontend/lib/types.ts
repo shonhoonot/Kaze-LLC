@@ -204,7 +204,7 @@ export interface ProductRequest {
 export interface User {
   id: number;
   name: string | null;
-  phone: string;
+  phone: string | null;
   email: string | null;
   role: string;
   default_address: string | null;
