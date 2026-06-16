@@ -96,6 +96,7 @@ export const Api = {
       body: { phone, code, name, referred_by },
     }),
   me: () => api<User>("/auth/me"),
+  updateProfile: (body: unknown) => api<User>("/auth/me", { method: "PATCH", body }),
 
   // cart
   cart: () => api<Cart>("/cart"),

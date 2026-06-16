@@ -159,6 +159,10 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Profile editing** — `PATCH /auth/me` lets a signed-in customer update
+  name / email / city / district / default address (email normalised +
+  uniqueness-checked); the account page has an inline edit form that refreshes
+  the auth context on save.
 - **Reorder** — one click re-adds every still-available item from a past
   order back into the cart (`POST /cart/reorder/{id}`), merging quantities and
   skipping deactivated products (reported back). Available on the order list

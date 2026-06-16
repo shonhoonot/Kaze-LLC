@@ -12,7 +12,7 @@ from app.auth import create_access_token, generate_otp, generate_referral_code, 
 from app.config import settings
 from app.database import get_db
 from app.models import OtpCode, User
-from app.schemas import OtpRequest, OtpRequestResponse, OtpVerify, TokenResponse, UserOut
+from app.schemas import OtpRequest, OtpRequestResponse, OtpVerify, TokenResponse, UserOut, UserUpdate
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 log = logging.getLogger("kaze.auth")
@@ -88,4 +88,27 @@ def verify_otp(body: OtpVerify, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserOut)
 def me(user: User = Depends(get_current_user)):
+    return user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_me(
+    body: UserUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    data = body.model_dump(exclude_unset=True)
+    new_email = data.get("email")
+    if new_email:
+        new_email = new_email.strip().lower()
+        clash = db.scalar(
+            select(User).where(User.email == new_email, User.id != user.id)
+        )
+        if clash is not None:
+            raise HTTPException(409, "Энэ и-мэйл аль хэдийн бүртгэгдсэн")
+        data["email"] = new_email
+    for field, value in data.items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
     return user
