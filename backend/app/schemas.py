@@ -549,3 +549,10 @@ class ProductRequestOut(BaseModel):
     quoted_price_mnt: int | None
     created_at: datetime
     updated_at: datetime
+
+
+# ───────────── reorder ─────────────
+class ReorderOut(BaseModel):
+    added: int
+    skipped: int
+    cart: CartOut

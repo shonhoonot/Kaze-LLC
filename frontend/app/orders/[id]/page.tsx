@@ -6,6 +6,7 @@ import { Api, getToken } from "@/lib/api";
 import type { Order } from "@/lib/types";
 import { mnt, jpy, kg } from "@/lib/format";
 import OrderTracker from "@/components/OrderTracker";
+import { useCart } from "@/components/CartProvider";
 
 interface Invoice {
   invoice_id: string;
@@ -20,6 +21,7 @@ export default function OrderDetailPage() {
   const search = useSearchParams();
   const router = useRouter();
   const shouldPay = search.get("pay") === "1";
+  const { refresh } = useCart();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -78,6 +80,18 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function doReorder() {
+    if (!order) return;
+    setBusy(true);
+    try {
+      const res = await Api.reorder(order.id);
+      await refresh();
+      router.push(res.skipped > 0 ? `/cart?reordered=${res.added}&skipped=${res.skipped}` : "/cart");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!order) return <div className="container-app py-20 text-center text-muted">Ачааллаж байна...</div>;
 
   const cancellable = order.status === "PLACED" || order.status === "PAID";
@@ -85,8 +99,15 @@ export default function OrderDetailPage() {
   return (
     <div className="container-app grid gap-8 py-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <h1 className="text-2xl font-bold">Захиалга #{order.id}</h1>
-        <p className="text-sm text-muted">{new Date(order.created_at).toLocaleString("mn-MN")}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Захиалга #{order.id}</h1>
+            <p className="text-sm text-muted">{new Date(order.created_at).toLocaleString("mn-MN")}</p>
+          </div>
+          <button className="btn-outline shrink-0 px-4 py-2 text-sm" onClick={doReorder} disabled={busy}>
+            ↻ Дахин захиалах
+          </button>
+        </div>
 
         {/* payment box */}
         {order.payment_status !== "paid" && (

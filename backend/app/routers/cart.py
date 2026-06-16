@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
 from app.database import get_db
-from app.models import Cart, CartItem, CartStatus, Product, User
+from app.models import Cart, CartItem, CartStatus, Order, Product, User
 from app.pricing import price_cart
 from app.schemas import (
     BoxFillOut,
@@ -15,6 +15,7 @@ from app.schemas import (
     CartItemUpdate,
     CartLineOut,
     CartOut,
+    ReorderOut,
 )
 from app.services.boxes import box_fill_payload, get_open_box
 from app.services.pricing_service import (
@@ -117,6 +118,40 @@ def add_item(body: CartItemIn, db: Session = Depends(get_db), user: User = Depen
     db.commit()
     db.refresh(cart)
     return _build_cart_out(db, cart)
+
+
+@router.post("/reorder/{order_id}", response_model=ReorderOut)
+def reorder(order_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Re-add every still-available item from a past order into the active cart."""
+    order = db.get(Order, order_id)
+    if order is None or order.user_id != user.id:
+        raise HTTPException(404, "Захиалга олдсонгүй")
+
+    cart = _get_or_create_cart(db, user)
+    added = skipped = 0
+    for item in order.items:
+        product = db.get(Product, item.product_id)
+        if product is None or not product.is_active:
+            skipped += 1
+            continue
+        existing = db.scalar(
+            select(CartItem).where(CartItem.cart_id == cart.id, CartItem.product_id == product.id)
+        )
+        if existing:
+            existing.qty += item.qty
+        else:
+            db.add(
+                CartItem(
+                    cart_id=cart.id,
+                    product_id=product.id,
+                    qty=item.qty,
+                    unit_price_jpy_snapshot=product.base_price_jpy,
+                )
+            )
+        added += 1
+    db.commit()
+    db.refresh(cart)
+    return ReorderOut(added=added, skipped=skipped, cart=_build_cart_out(db, cart))
 
 
 @router.patch("/items/{item_id}", response_model=CartOut)

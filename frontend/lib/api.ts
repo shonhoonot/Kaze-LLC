@@ -124,6 +124,8 @@ export const Api = {
   order: (id: number | string) => api<Order>(`/orders/${id}`),
   cancelOrder: (id: number | string, reason?: string) =>
     api<Order>(`/orders/${id}/cancel`, { method: "POST", body: { reason: reason || null } }),
+  reorder: (id: number | string) =>
+    api<ReorderResult>(`/cart/reorder/${id}`, { method: "POST" }),
 
   // reviews
   productReviews: (productId: number | string) =>
@@ -220,6 +222,12 @@ export interface Coupon {
   usage_limit: number | null;
   used_count: number;
   created_at: string;
+}
+
+export interface ReorderResult {
+  added: number;
+  skipped: number;
+  cart: Cart;
 }
 
 export interface CouponValidation {

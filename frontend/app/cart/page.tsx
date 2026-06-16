@@ -14,6 +14,7 @@ export default function CartPage() {
   const { refresh } = useCart();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (!getToken()) {
@@ -23,6 +24,15 @@ export default function CartPage() {
     Api.cart()
       .then(setCart)
       .finally(() => setLoading(false));
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("reordered")) {
+      const added = params.get("reordered");
+      const skipped = Number(params.get("skipped") || 0);
+      setNotice(
+        `${added} бараа сагсанд нэмэгдлээ.` +
+          (skipped > 0 ? ` ${skipped} бараа дууссан тул нэмэгдсэнгүй.` : "")
+      );
+    }
   }, [router]);
 
   async function setQty(id: number, qty: number) {
@@ -53,6 +63,9 @@ export default function CartPage() {
     <div className="container-app grid gap-8 py-8 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <h1 className="mb-5 text-2xl font-bold">Миний сагс</h1>
+        {notice && (
+          <div className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>
+        )}
         <div className="space-y-4">
           {cart.lines.map((line) => (
             <div key={line.id} className="card flex gap-4 p-4">
