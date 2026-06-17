@@ -159,6 +159,10 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Home page & rating sort** — the landing page adds a hero search box, a
+  3-step "how it works" strip, a ⭐ top-rated section, and a custom-request
+  banner; backed by a new `sort=rating` option on `/products` (orders by
+  average rating, then review count).
 - **Image uploads** — `POST /admin/uploads` (staff) accepts an image file
   (JPG/PNG/WEBP/GIF, ≤5MB), stores it via a pluggable `services/storage`
   backend (local disk served at `/uploads`, or Azure Blob), and returns its

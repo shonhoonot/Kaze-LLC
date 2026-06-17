@@ -84,3 +84,14 @@ def test_delete_own_review(client, login):
     assert client.get(f"/products/{pid}/reviews").json()["summary"]["review_count"] == 0
     # deleting again -> 404
     assert client.delete(f"/products/{pid}/reviews", headers=h).status_code == 404
+
+
+def test_sort_by_rating_surfaces_best(client, login):
+    # give a mid-list product a perfect score; it should jump to the top
+    items = client.get("/products?page=1&page_size=50").json()["items"]
+    target = next(p for p in items if p["review_count"] == 0)
+    client.post(f"/products/{target['id']}/reviews", headers=login("+97695210001"), json={"rating": 5})
+    client.post(f"/products/{target['id']}/reviews", headers=login("+97695210002"), json={"rating": 5})
+    top = client.get("/products?sort=rating&page=1&page_size=1").json()["items"][0]
+    assert top["id"] == target["id"]
+    assert top["avg_rating"] == 5.0

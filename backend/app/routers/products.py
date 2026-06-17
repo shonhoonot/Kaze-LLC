@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Category, Product
+from app.models import Category, Product, Review
 from app.schemas import PriceBreakdown, ProductListOut, ProductOut
 from app.services.pricing_service import price_breakdown_dict, price_product_line
 from app.services.reviews import rating_for, rating_map
@@ -56,18 +56,35 @@ def list_products(
     if max_price_jpy is not None:
         stmt = stmt.where(Product.base_price_jpy <= max_price_jpy)
 
-    order_by = {
-        "price_asc": Product.base_price_jpy.asc(),
-        "price_desc": Product.base_price_jpy.desc(),
-        "new": Product.created_at.desc(),
-    }.get(sort, Product.created_at.desc())
-
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+
+    rows_stmt = stmt.options(selectinload(Product.images))
+    if sort == "rating":
+        # highest average rating first, then most-reviewed, then newest
+        agg = (
+            select(
+                Review.product_id.label("pid"),
+                func.avg(Review.rating).label("avg"),
+                func.count().label("cnt"),
+            )
+            .group_by(Review.product_id)
+            .subquery()
+        )
+        rows_stmt = rows_stmt.outerjoin(agg, Product.id == agg.c.pid).order_by(
+            func.coalesce(agg.c.avg, 0).desc(),
+            func.coalesce(agg.c.cnt, 0).desc(),
+            Product.created_at.desc(),
+        )
+    else:
+        order_by = {
+            "price_asc": Product.base_price_jpy.asc(),
+            "price_desc": Product.base_price_jpy.desc(),
+            "new": Product.created_at.desc(),
+        }.get(sort, Product.created_at.desc())
+        rows_stmt = rows_stmt.order_by(order_by)
+
     rows = db.scalars(
-        stmt.options(selectinload(Product.images))
-        .order_by(order_by)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
+        rows_stmt.offset((page - 1) * page_size).limit(page_size)
     ).all()
 
     ratings = rating_map(db, [p.id for p in rows])
