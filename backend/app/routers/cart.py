@@ -96,6 +96,8 @@ def add_item(body: CartItemIn, db: Session = Depends(get_db), user: User = Depen
     product = db.get(Product, body.product_id)
     if product is None or not product.is_active:
         raise HTTPException(404, "Бараа олдсонгүй")
+    if not product.in_stock:
+        raise HTTPException(400, "Уг бараа одоогоор дууссан байна")
 
     cart = _get_or_create_cart(db, user)
     existing = db.scalar(
@@ -131,7 +133,7 @@ def reorder(order_id: int, db: Session = Depends(get_db), user: User = Depends(g
     added = skipped = 0
     for item in order.items:
         product = db.get(Product, item.product_id)
-        if product is None or not product.is_active:
+        if product is None or not product.is_active or not product.in_stock:
             skipped += 1
             continue
         existing = db.scalar(

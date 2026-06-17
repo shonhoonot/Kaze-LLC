@@ -38,6 +38,15 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
     global_rule = get_global_rule(db)
     fx = global_rule.fx_rate_jpy_mnt if global_rule else 22.5
 
+    # Block checkout if anything in the cart went out of stock / inactive.
+    unavailable = [
+        item.product.title_mn
+        for item in cart.items
+        if not item.product.is_active or not item.product.in_stock
+    ]
+    if unavailable:
+        raise HTTPException(400, f"Дараах бараа дууссан байна: {', '.join(unavailable)}")
+
     priced = []
     order_items: list[OrderItem] = []
     for item in cart.items:

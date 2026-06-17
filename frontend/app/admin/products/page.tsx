@@ -125,6 +125,11 @@ export default function AdminProducts() {
     await load();
   }
 
+  async function setStockState(id: number, value: boolean) {
+    await AdminApi.updateProduct(id, { in_stock: value });
+    await load();
+  }
+
   async function runImport() {
     const file = fileRef.current?.files?.[0];
     if (!file) return;
@@ -261,9 +266,18 @@ export default function AdminProducts() {
                   {!p.is_active && (
                     <span className="rounded bg-line px-1.5 py-0.5 text-[10px] text-muted">Идэвхгүй</span>
                   )}
+                  {p.is_active && !p.in_stock && (
+                    <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">Дууссан</span>
+                  )}
                 </div>
                 <div className="text-xs text-muted">{p.brand} • {jpy(p.base_price_jpy)} • {p.weight_grams}г</div>
               </div>
+              <button
+                className="text-xs text-muted hover:text-ink"
+                onClick={() => setStockState(p.id, !p.in_stock)}
+              >
+                {p.in_stock ? "Дууссан болгох" : "Нөөцтэй болгох"}
+              </button>
               {p.is_active ? (
                 <button className="text-xs text-accent" onClick={() => setActiveState(p.id, false)}>Идэвхгүй</button>
               ) : (

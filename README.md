@@ -159,6 +159,11 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Out-of-stock handling** — the `in_stock` flag is now enforced end-to-end:
+  adding a sold-out item to the cart is blocked, checkout refuses if anything
+  in the cart sold out (naming the items), and reorder skips it. Storefront
+  shows a "Дууссан" badge / disabled buy button; admins toggle stock from the
+  products list.
 - **Sign in with Google** — `POST /auth/google` verifies a Google ID token
   (`services/google_auth`, lazy-imported) and links it to an existing email
   account or creates a new one (phone is now optional; users carry a

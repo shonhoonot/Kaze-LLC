@@ -26,7 +26,12 @@ export default function ProductCard({ product }: { product: Product }) {
           <span className={saved ? "text-accent" : "text-muted"}>{saved ? "♥" : "♡"}</span>
         </button>
         <Link href={`/product/${product.id}`}>
-          <div className="aspect-square w-full overflow-hidden bg-[#F5F5F5]">
+          <div className="relative aspect-square w-full overflow-hidden bg-[#F5F5F5]">
+            {!product.in_stock && (
+              <span className="absolute left-2 top-2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[11px] font-medium text-white">
+                Дууссан
+              </span>
+            )}
             {img ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

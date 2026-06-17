@@ -131,8 +131,14 @@ export default function ProductPage() {
         />
 
         <div className="mt-4 flex gap-3">
-          <button onClick={addToCart} disabled={adding} className="btn-primary flex-1">
-            {added ? "Сагсанд нэмэгдлээ ✓" : adding ? "Нэмж байна..." : "Сагсанд нэмэх"}
+          <button onClick={addToCart} disabled={adding || !product.in_stock} className="btn-primary flex-1 disabled:opacity-50">
+            {!product.in_stock
+              ? "Дууссан"
+              : added
+                ? "Сагсанд нэмэгдлээ ✓"
+                : adding
+                  ? "Нэмж байна..."
+                  : "Сагсанд нэмэх"}
           </button>
           <button
             onClick={() => toggle(product.id)}
