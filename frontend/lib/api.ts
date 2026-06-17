@@ -276,6 +276,26 @@ export const AdminApi = {
     if (!res.ok) throw new ApiError(`${res.status}`, res.status);
     return res.json();
   },
+  uploadImage: async (file: File): Promise<string> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const headers: Record<string, string> = {};
+    const token = getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${BASE}/admin/uploads`, { method: "POST", headers, body: fd });
+    if (!res.ok) {
+      let detail = `${res.status}`;
+      try {
+        detail = (await res.json()).detail || detail;
+      } catch {
+        /* ignore */
+      }
+      throw new ApiError(detail, res.status);
+    }
+    const { url } = await res.json();
+    // make local "/uploads/..." URLs absolute against the API origin
+    return url.startsWith("http") ? url : `${BASE}${url}`;
+  },
   coupons: () => api<Coupon[]>("/admin/coupons"),
   createCoupon: (body: unknown) => api<Coupon>("/admin/coupons", { method: "POST", body }),
   updateCoupon: (id: number, body: unknown) => api<Coupon>(`/admin/coupons/${id}`, { method: "PATCH", body }),

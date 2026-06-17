@@ -560,3 +560,8 @@ class ReorderOut(BaseModel):
     added: int
     skipped: int
     cart: CartOut
+
+
+# ───────────── uploads ─────────────
+class UploadOut(BaseModel):
+    url: str

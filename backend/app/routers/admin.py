@@ -52,8 +52,10 @@ from app.schemas import (
     ProductScrapeOut,
     ProductUpdate,
     StatusCountOut,
+    UploadOut,
 )
 from app.services.boxes import box_fill_payload, get_open_box
+from app.services.storage import UploadError, save_image
 from app.services.notifications import record_order_event
 from app.services.scraper import fetch_product
 
@@ -113,6 +115,19 @@ def scrape_product(
     if not url.lower().startswith(("http://", "https://")):
         raise HTTPException(400, "Зөв http(s) холбоос оруулна уу")
     return ProductScrapeOut(**fetch_product(url))
+
+
+@router.post("/uploads", response_model=UploadOut, status_code=201)
+def upload_image(
+    file: UploadFile,
+    _: User = Depends(require_staff),
+):
+    """Store an uploaded image and return its public URL."""
+    try:
+        url = save_image(file.file.read(), file.content_type or "")
+    except UploadError as exc:
+        raise HTTPException(400, str(exc))
+    return UploadOut(url=url)
 
 
 @router.post("/products/import")

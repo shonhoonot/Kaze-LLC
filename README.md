@@ -159,6 +159,11 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Image uploads** — `POST /admin/uploads` (staff) accepts an image file
+  (JPG/PNG/WEBP/GIF, ≤5MB), stores it via a pluggable `services/storage`
+  backend (local disk served at `/uploads`, or Azure Blob), and returns its
+  URL. The admin product form can upload a photo inline instead of pasting a
+  URL.
 - **Out-of-stock handling** — the `in_stock` flag is now enforced end-to-end:
   adding a sold-out item to the cart is blocked, checkout refuses if anything
   in the cart sold out (naming the items), and reorder skips it. Storefront

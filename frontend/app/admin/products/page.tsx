@@ -26,6 +26,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
+  const [uploadingImg, setUploadingImg] = useState(false);
 
   // url sourcing
   const [scrapeUrl, setScrapeUrl] = useState("");
@@ -197,6 +198,27 @@ export default function AdminProducts() {
             <input className="input" type="number" placeholder="Үнэ (JPY)" value={form.base_price_jpy} onChange={(e) => setForm({ ...form, base_price_jpy: e.target.value })} />
             <input className="input" type="number" placeholder="Жин (грамм)" value={form.weight_grams} onChange={(e) => setForm({ ...form, weight_grams: e.target.value })} />
             <input className="input" placeholder="Зургийн URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <div>
+              <label className="text-xs text-muted">эсвэл зураг оруулах</label>
+              <input
+                className="mt-1 block w-full text-xs"
+                type="file"
+                accept="image/*"
+                disabled={uploadingImg}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  setUploadingImg(true);
+                  try {
+                    const url = await AdminApi.uploadImage(file);
+                    setForm((f) => ({ ...f, image_url: url }));
+                  } finally {
+                    setUploadingImg(false);
+                  }
+                }}
+              />
+              {uploadingImg && <p className="mt-1 text-xs text-muted">Зураг хуулж байна...</p>}
+            </div>
             <button className="btn-primary w-full" onClick={create} disabled={saving || !form.title_mn || !form.base_price_jpy}>
               {saving ? "Хадгалж байна..." : "Нэмэх"}
             </button>
