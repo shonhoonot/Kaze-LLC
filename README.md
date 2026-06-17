@@ -159,6 +159,10 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Recently viewed** — product views are tracked client-side in
+  localStorage (`lib/recentlyViewed`, deduped, capped at 8) and surfaced as a
+  "Сүүлд үзсэн" section on the home page and product detail (excluding the
+  current item). No backend or account needed.
 - **Home page & rating sort** — the landing page adds a hero search box, a
   3-step "how it works" strip, a ⭐ top-rated section, and a custom-request
   banner; backed by a new `sort=rating` option on `/products` (orders by

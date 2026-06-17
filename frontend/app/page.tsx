@@ -7,6 +7,7 @@ import { Api } from "@/lib/api";
 import type { BoxFill, Category, Product } from "@/lib/types";
 import ProductCard from "@/components/ProductCard";
 import BoxFillBar from "@/components/BoxFillBar";
+import RecentlyViewed from "@/components/RecentlyViewed";
 
 const BRANDS = ["Uniqlo", "GU", "Amazon JP", "Anker", "Sony"];
 
@@ -153,6 +154,9 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Recently viewed */}
+      <RecentlyViewed />
 
       {/* Custom request banner */}
       <section className="container-app py-12">

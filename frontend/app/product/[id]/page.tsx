@@ -9,6 +9,8 @@ import { useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
 import { Stars } from "@/components/Stars";
 import ProductReviewsSection from "@/components/ProductReviewsSection";
+import RecentlyViewed from "@/components/RecentlyViewed";
+import { addRecentlyViewed } from "@/lib/recentlyViewed";
 
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
@@ -24,7 +26,12 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    Api.product(params.id).then(setProduct).catch(() => setProduct(null));
+    Api.product(params.id)
+      .then((p) => {
+        setProduct(p);
+        addRecentlyViewed(p);
+      })
+      .catch(() => setProduct(null));
   }, [params.id]);
 
   if (!product) {
@@ -160,6 +167,7 @@ export default function ProductPage() {
     </div>
 
       <ProductReviewsSection productId={product.id} />
+      <RecentlyViewed excludeId={product.id} />
     </div>
   );
 }
