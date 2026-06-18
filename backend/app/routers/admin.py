@@ -17,6 +17,7 @@ from app.models import (
     BoxStatus,
     Coupon,
     CouponType,
+    FxMode,
     Notification,
     Order,
     OrderPhoto,
@@ -58,6 +59,7 @@ from app.services.boxes import box_fill_payload, get_open_box
 from app.services.storage import UploadError, save_image
 from app.services.notifications import record_order_event
 from app.services.scraper import fetch_product
+from app.services.fx import FxError, fetch_live_rate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -323,6 +325,28 @@ def upsert_pricing_rule(
     rule.shipping_fee_per_kg_jpy = body.shipping_fee_per_kg_jpy
     rule.fx_rate_jpy_mnt = body.fx_rate_jpy_mnt
     rule.fx_mode = body.fx_mode
+    db.commit()
+    db.refresh(rule)
+    return rule
+
+
+@router.post("/fx/refresh", response_model=PricingRuleOut)
+def refresh_fx_rate(db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Pull the live JPY→MNT rate and update the global pricing rule."""
+    try:
+        rate = fetch_live_rate()
+    except FxError as exc:
+        raise HTTPException(502, str(exc))
+    rule = db.scalar(
+        select(PricingRule).where(
+            PricingRule.scope == PricingScope.global_, PricingRule.scope_ref.is_(None)
+        )
+    )
+    if rule is None:
+        rule = PricingRule(scope=PricingScope.global_)
+        db.add(rule)
+    rule.fx_rate_jpy_mnt = rate
+    rule.fx_mode = FxMode.live
     db.commit()
     db.refresh(rule)
     return rule

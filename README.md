@@ -159,6 +159,11 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Live FX rate** — `POST /admin/fx/refresh` pulls the current JPY→MNT rate
+  from a public rates API (`services/fx`, default open.er-api.com, base JPY)
+  and writes it to the global pricing rule (mode → live). The admin pricing
+  page has an "Амьд татах" button; failures (blocked network / bad response)
+  surface as a clear message instead of corrupting the rate.
 - **Recently viewed** — product views are tracked client-side in
   localStorage (`lib/recentlyViewed`, deduped, capped at 8) and surfaced as a
   "Сүүлд үзсэн" section on the home page and product detail (excluding the

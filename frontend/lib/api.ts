@@ -304,6 +304,7 @@ export const AdminApi = {
   updateRequest: (id: number, body: unknown) =>
     api<ProductRequest>(`/admin/requests/${id}`, { method: "PATCH", body }),
   pricingRules: () => api<PricingRule[]>("/admin/pricing-rules"),
+  refreshFx: () => api<PricingRule>("/admin/fx/refresh", { method: "POST" }),
   upsertPricingRule: (body: unknown) => api<PricingRule>("/admin/pricing-rules", { method: "PUT", body }),
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),
   updateOrderStatus: (id: number, status: string, note?: string) =>
