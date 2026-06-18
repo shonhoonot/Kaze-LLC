@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/pricing", label: "Үнэ тооцоо" },
   { href: "/admin/orders", label: "Захиалга" },
   { href: "/admin/boxes", label: "Хайрцаг" },
+  { href: "/admin/contact", label: "Холбоо барих" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

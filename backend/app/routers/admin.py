@@ -15,6 +15,7 @@ from app.models import (
     Box,
     BoxItem,
     BoxStatus,
+    ContactMessage,
     Coupon,
     CouponType,
     FxMode,
@@ -35,6 +36,8 @@ from app.models import (
 from app.schemas import (
     BoxItemIn,
     BoxOut,
+    ContactOut,
+    ContactUpdate,
     CouponIn,
     CouponOut,
     CouponUpdate,
@@ -295,6 +298,35 @@ def _notify_request(db: Session, req: ProductRequest) -> None:
         title, suffix = copy
         body_text = req.admin_note or suffix
         db.add(Notification(user_id=req.user_id, title=title, body=body_text))
+
+
+# ─────────────── contact messages ───────────────
+@router.get("/contact", response_model=list[ContactOut])
+def list_contact(
+    handled: bool | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    stmt = select(ContactMessage)
+    if handled is not None:
+        stmt = stmt.where(ContactMessage.handled.is_(handled))
+    return db.scalars(stmt.order_by(ContactMessage.created_at.desc())).all()
+
+
+@router.patch("/contact/{message_id}", response_model=ContactOut)
+def update_contact(
+    message_id: int,
+    body: ContactUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_staff),
+):
+    msg = db.get(ContactMessage, message_id)
+    if msg is None:
+        raise HTTPException(404, "Зурвас олдсонгүй")
+    msg.handled = body.handled
+    db.commit()
+    db.refresh(msg)
+    return msg
 
 
 # ─────────────── pricing rules ───────────────

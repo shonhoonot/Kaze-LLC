@@ -159,6 +159,10 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Help / FAQ & contact** — a `/contact` page with an FAQ accordion and a
+  public message form (`POST /contact`, links to the user when signed in);
+  staff triage submissions under `/admin/contact` (filter open/done, toggle
+  handled).
 - **Live FX rate** — `POST /admin/fx/refresh` pulls the current JPY→MNT rate
   from a public rates API (`services/fx`, default open.er-api.com, base JPY)
   and writes it to the global pricing rule (mode → live). The admin pricing

@@ -33,7 +33,7 @@ export default function Header() {
           <Link href="/category/beauty" className="hover:text-ink">Гоо сайхан</Link>
           <Link href="/category/electronics" className="hover:text-ink">Цахилгаан</Link>
           <Link href="/request" className="hover:text-ink">Захиалгат бараа</Link>
-          <Link href="/how-it-works" className="hover:text-ink">Хэрхэн ажилладаг</Link>
+          <Link href="/contact" className="hover:text-ink">Тусламж</Link>
         </nav>
 
         <form onSubmit={submitSearch} className="hidden flex-1 max-w-xs lg:block">
@@ -109,7 +109,7 @@ export default function Header() {
             <Link href="/category/beauty" className="py-2" onClick={() => setOpen(false)}>Гоо сайхан</Link>
             <Link href="/category/electronics" className="py-2" onClick={() => setOpen(false)}>Цахилгаан</Link>
             <Link href="/request" className="py-2" onClick={() => setOpen(false)}>Захиалгат бараа</Link>
-            <Link href="/how-it-works" className="py-2" onClick={() => setOpen(false)}>Хэрхэн ажилладаг</Link>
+            <Link href="/contact" className="py-2" onClick={() => setOpen(false)}>Тусламж</Link>
             <Link href="/orders" className="py-2" onClick={() => setOpen(false)}>Миний захиалга</Link>
             {user && (
               <Link href="/notifications" className="py-2" onClick={() => setOpen(false)}>

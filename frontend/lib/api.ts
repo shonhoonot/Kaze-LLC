@@ -2,6 +2,7 @@ import type {
   Address,
   Cart,
   Category,
+  ContactMessage,
   Order,
   ProductRequest,
   ProductReviews,
@@ -103,6 +104,8 @@ export const Api = {
     }),
   me: () => api<User>("/auth/me"),
   updateProfile: (body: unknown) => api<User>("/auth/me", { method: "PATCH", body }),
+  submitContact: (body: { name?: string; contact: string; message: string }) =>
+    api<ContactMessage>("/contact", { method: "POST", body }),
 
   // cart
   cart: () => api<Cart>("/cart"),
@@ -305,6 +308,10 @@ export const AdminApi = {
     api<ProductRequest>(`/admin/requests/${id}`, { method: "PATCH", body }),
   pricingRules: () => api<PricingRule[]>("/admin/pricing-rules"),
   refreshFx: () => api<PricingRule>("/admin/fx/refresh", { method: "POST" }),
+  contactMessages: (handled?: boolean) =>
+    api<ContactMessage[]>(`/admin/contact${handled === undefined ? "" : `?handled=${handled}`}`),
+  markContactHandled: (id: number, handled: boolean) =>
+    api<ContactMessage>(`/admin/contact/${id}`, { method: "PATCH", body: { handled } }),
   upsertPricingRule: (body: unknown) => api<PricingRule>("/admin/pricing-rules", { method: "PUT", body }),
   orders: (status?: string) => api<Order[]>(`/admin/orders${status ? `?status=${status}` : ""}`),
   updateOrderStatus: (id: number, status: string, note?: string) =>

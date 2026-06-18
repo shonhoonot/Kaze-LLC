@@ -440,3 +440,17 @@ class ProductRequest(Base):
     )
 
     user: Mapped[User] = relationship()
+
+
+class ContactMessage(Base):
+    """A message sent through the public contact form."""
+
+    __tablename__ = "contact_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
+    name: Mapped[str | None] = mapped_column(String(120))
+    contact: Mapped[str] = mapped_column(String(160))  # phone or email to reply to
+    message: Mapped[str] = mapped_column(Text)
+    handled: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

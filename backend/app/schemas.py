@@ -565,3 +565,25 @@ class ReorderOut(BaseModel):
 # ───────────── uploads ─────────────
 class UploadOut(BaseModel):
     url: str
+
+
+# ───────────── contact ─────────────
+class ContactIn(BaseModel):
+    name: str | None = None
+    contact: str
+    message: str
+
+
+class ContactUpdate(BaseModel):
+    handled: bool
+
+
+class ContactOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int | None
+    name: str | None
+    contact: str
+    message: str
+    handled: bool
+    created_at: datetime

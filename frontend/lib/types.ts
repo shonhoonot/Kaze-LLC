@@ -201,6 +201,16 @@ export interface ProductRequest {
   updated_at: string;
 }
 
+export interface ContactMessage {
+  id: number;
+  user_id: number | null;
+  name: string | null;
+  contact: string;
+  message: string;
+  handled: boolean;
+  created_at: string;
+}
+
 export interface User {
   id: number;
   name: string | null;
