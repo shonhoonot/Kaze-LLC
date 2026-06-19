@@ -42,6 +42,7 @@ class LinePricing:
     subtotal_jpy: int        # (base + markup) * qty, markup excluded
     line_total_jpy: int      # everything, in JPY
     line_total_mnt: int      # display value
+    unit_total_jpy: int      # per-unit all-in value in JPY
     unit_total_mnt: int      # per-unit display value (rounded)
 
     def as_dict(self) -> dict:
@@ -89,6 +90,7 @@ def price_line(
         subtotal_jpy=subtotal_jpy,
         line_total_jpy=line_total_jpy,
         line_total_mnt=line_total_mnt,
+        unit_total_jpy=unit_total_jpy,
         unit_total_mnt=unit_total_mnt,
     )
 

@@ -26,7 +26,7 @@ export default function CartPage() {
       .finally(() => setLoading(false));
     const params = new URLSearchParams(window.location.search);
     if (params.has("reordered")) {
-      const added = params.get("reordered");
+      const added = Number(params.get("reordered") || 0);
       const skipped = Number(params.get("skipped") || 0);
       setNotice(
         `${added} бараа сагсанд нэмэгдлээ.` +

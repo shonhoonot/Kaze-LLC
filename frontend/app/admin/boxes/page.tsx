@@ -45,7 +45,9 @@ export default function AdminBoxes() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {boxes.map((box) => {
-          const pct = Math.min((box.current_weight_grams / box.capacity_grams) * 100, 100);
+          const pct = box.capacity_grams > 0
+            ? Math.min((box.current_weight_grams / box.capacity_grams) * 100, 100)
+            : 0;
           const over = box.current_weight_grams > box.capacity_grams;
           return (
             <div key={box.id} className="card p-5">

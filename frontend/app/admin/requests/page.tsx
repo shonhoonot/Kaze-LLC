@@ -44,6 +44,11 @@ export default function AdminRequests() {
       admin_note: d.admin_note || null,
       quoted_price_mnt: d.quoted_price_mnt ? Number(d.quoted_price_mnt) : null,
     });
+    setDrafts((all) => {
+      const next = { ...all };
+      delete next[r.id];
+      return next;
+    });
     await load();
   }
 

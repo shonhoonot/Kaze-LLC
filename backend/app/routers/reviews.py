@@ -17,8 +17,8 @@ router = APIRouter(tags=["reviews"])
 def _author_name(user: User | None) -> str:
     if user and user.name:
         return user.name
-    if user and user.phone:
-        return user.phone[:-4] + "••••" if len(user.phone) >= 4 else "Хэрэглэгч"
+    if user and user.phone and len(user.phone) >= 4:
+        return "••••" + user.phone[-4:]
     return "Хэрэглэгч"
 
 

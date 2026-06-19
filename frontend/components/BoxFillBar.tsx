@@ -2,7 +2,7 @@ import type { BoxFill } from "@/lib/types";
 import { kg } from "@/lib/format";
 
 export default function BoxFillBar({ fill, compact }: { fill: BoxFill; compact?: boolean }) {
-  const pct = Math.min(fill.fill_percent, 100);
+  const pct = Math.max(0, Math.min(fill.fill_percent || 0, 100));
   return (
     <div className={compact ? "" : "card p-5"}>
       {!compact && (

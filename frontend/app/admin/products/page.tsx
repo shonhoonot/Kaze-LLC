@@ -219,7 +219,7 @@ export default function AdminProducts() {
               />
               {uploadingImg && <p className="mt-1 text-xs text-muted">Зураг хуулж байна...</p>}
             </div>
-            <button className="btn-primary w-full" onClick={create} disabled={saving || !form.title_mn || !form.base_price_jpy}>
+            <button className="btn-primary w-full" onClick={create} disabled={saving || !form.title_mn || !form.base_price_jpy || !form.weight_grams}>
               {saving ? "Хадгалж байна..." : "Нэмэх"}
             </button>
           </div>

@@ -36,6 +36,10 @@ export default function AdminOrders() {
     status,
     orders: orders.filter((o) => o.status === status),
   }));
+  // orders outside the pipeline (cancelled / refunded) — shown separately
+  const closed = orders.filter(
+    (o) => !ORDER_PIPELINE.includes(o.status as (typeof ORDER_PIPELINE)[number])
+  );
 
   return (
     <div>
@@ -73,6 +77,23 @@ export default function AdminOrders() {
           </div>
         ))}
       </div>
+
+      {closed.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-sm font-semibold text-muted">Цуцлагдсан / Буцаагдсан</h2>
+          <div className="flex flex-wrap gap-2">
+            {closed.map((o) => (
+              <div key={o.id} className="card p-3 text-sm opacity-70">
+                <div className="flex gap-3">
+                  <span className="font-medium">#{o.id}</span>
+                  <span>{mnt(o.total_mnt)}</span>
+                  <span className="text-xs text-muted">{ORDER_STATUS_MN[o.status]}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

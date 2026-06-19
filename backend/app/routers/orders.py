@@ -58,7 +58,7 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
                 product_id=product.id,
                 title_mn_snapshot=product.title_mn,
                 qty=item.qty,
-                unit_price_jpy=line.unit_total_mnt,  # display unit; JPY components in line_total
+                unit_price_jpy=line.unit_total_jpy,  # per-unit all-in JPY
                 line_total_jpy=line.line_total_jpy,
                 weight_grams=line.weight_grams,
             )

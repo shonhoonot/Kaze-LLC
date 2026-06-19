@@ -34,11 +34,11 @@ export default function ProductPage() {
       .catch(() => setProduct(null));
   }, [params.id]);
 
-  if (!product) {
+  if (!product || !product.price) {
     return <div className="container-app py-20 text-center text-muted">Ачааллаж байна...</div>;
   }
 
-  const price = product.price!;
+  const price = product.price;
 
   async function addToCart() {
     if (!getToken()) {

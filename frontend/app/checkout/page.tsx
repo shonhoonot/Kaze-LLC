@@ -48,9 +48,10 @@ export default function CheckoutPage() {
     });
   }, [router]);
 
+  // prefill phone from the profile once (don't fight the user if they clear it)
   useEffect(() => {
-    if (user && phone === "") setPhone(user.phone || "");
-  }, [user, phone]);
+    if (user?.phone) setPhone((p) => p || user.phone || "");
+  }, [user]);
 
   async function applyCoupon() {
     const code = couponInput.trim();
@@ -120,6 +121,7 @@ export default function CheckoutPage() {
   }
 
   const discountMnt = coupon?.valid ? coupon.discount_mnt : 0;
+  const discountJpy = coupon?.valid ? coupon.discount_jpy : 0;
 
   if (!cart) return <div className="container-app py-20 text-center text-muted">Ачааллаж байна...</div>;
 
@@ -270,7 +272,7 @@ export default function CheckoutPage() {
             <span className="font-semibold">Нийт</span>
             <div className="text-right">
               <div className="text-lg font-bold">{mnt(cart.total_mnt - discountMnt)}</div>
-              <div className="text-xs text-muted">{jpy(cart.total_jpy)}</div>
+              <div className="text-xs text-muted">{jpy(cart.total_jpy - discountJpy)}</div>
             </div>
           </div>
           <button className="btn-primary mt-4 w-full" onClick={placeOrder} disabled={busy}>

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth import require_admin, require_staff
@@ -167,10 +168,16 @@ def import_products_csv(
             image_url = (row.get("image_url") or "").strip()
             if image_url:
                 product.images = [ProductImage(url=image_url, sort_order=0)]
-            db.add(product)
+            # Per-row savepoint so one bad row (e.g. invalid category_id FK)
+            # doesn't roll back the whole import or 500 at the final commit.
+            with db.begin_nested():
+                db.add(product)
+                db.flush()
             created += 1
         except (KeyError, ValueError) as exc:
             errors.append(f"мөр {i}: {exc}")
+        except IntegrityError as exc:
+            errors.append(f"мөр {i}: хадгалах боломжгүй ({exc.orig})")
     db.commit()
     return {"created": created, "errors": errors}
 
@@ -414,6 +421,8 @@ def update_order_status(
     order.status = body.status
     if body.status == OrderStatus.PAID and order.payment_status != PaymentStatus.paid:
         order.payment_status = PaymentStatus.paid
+    elif body.status == OrderStatus.REFUNDED and order.payment_status == PaymentStatus.paid:
+        order.payment_status = PaymentStatus.refunded
     record_order_event(db, order, body.status, note=body.note)
     db.commit()
     db.refresh(order)

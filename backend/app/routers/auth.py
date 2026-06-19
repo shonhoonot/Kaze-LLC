@@ -75,19 +75,21 @@ def verify_otp(body: OtpVerify, db: Session = Depends(get_db)):
 
     user = db.scalar(select(User).where(User.phone == phone))
     if user is None:
+        # Only honour a referral code that actually exists.
+        referrer = None
+        if body.referred_by:
+            referrer = db.scalar(select(User).where(User.referral_code == body.referred_by))
         user = User(
             phone=phone,
             name=body.name,
             referral_code=generate_referral_code(),
-            referred_by=body.referred_by,
+            referred_by=referrer.referral_code if referrer else None,
         )
         db.add(user)
         db.flush()
         # referral credit for the referrer (service-fee credit, in JPY)
-        if body.referred_by:
-            referrer = db.scalar(select(User).where(User.referral_code == body.referred_by))
-            if referrer:
-                referrer.referral_credit_jpy += 400
+        if referrer:
+            referrer.referral_credit_jpy += 400
 
     db.commit()
     db.refresh(user)
