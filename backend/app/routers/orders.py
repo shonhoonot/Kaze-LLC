@@ -90,6 +90,15 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
 
     service_fee_jpy = agg.service_fee_jpy - referee_discount_jpy
     total_jpy = max(0, agg.total_jpy - referee_discount_jpy - coupon_discount_jpy)
+
+    # Redeem the user's accrued referral credit against whatever is still owed.
+    credit_used_jpy = 0
+    if user.referral_credit_jpy > 0 and total_jpy > 0:
+        credit_used_jpy = min(user.referral_credit_jpy, total_jpy)
+        user.referral_credit_jpy -= credit_used_jpy
+        total_jpy -= credit_used_jpy
+
+    discount_jpy = coupon_discount_jpy + credit_used_jpy
     total_mnt = round(total_jpy * fx)
 
     order = Order(
@@ -100,7 +109,7 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         service_fee_jpy=service_fee_jpy,
         est_weight_grams=agg.est_weight_grams,
         shipping_fee_jpy=agg.shipping_fee_jpy,
-        discount_jpy=coupon_discount_jpy,
+        discount_jpy=discount_jpy,
         coupon_code=coupon_code,
         total_jpy=total_jpy,
         total_mnt=total_mnt,
@@ -118,6 +127,8 @@ def create_order(body: OrderCreate, db: Session = Depends(get_db), user: User = 
         notes.append(f"Урамшууллын хөнгөлөлт ¥{referee_discount_jpy}")
     if coupon_discount_jpy:
         notes.append(f"Купон {coupon_code}: ¥{coupon_discount_jpy} хөнгөлөлт")
+    if credit_used_jpy:
+        notes.append(f"Урамшууллын кредит ¥{credit_used_jpy} ашигласан")
     record_order_event(db, order, OrderStatus.PLACED, note=" • ".join(notes) or None)
 
     cart.status = CartStatus.converted

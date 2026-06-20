@@ -25,6 +25,8 @@ def create_invoice(
         raise HTTPException(404, "Захиалга олдсонгүй")
     if order.payment_status == PaymentStatus.paid:
         raise HTTPException(400, "Захиалга аль хэдийн төлөгдсөн")
+    if order.status in (OrderStatus.CANCELLED, OrderStatus.REFUNDED):
+        raise HTTPException(400, "Цуцлагдсан захиалгад төлбөр хийх боломжгүй")
 
     provider = get_payment_provider()
     invoice = provider.create_invoice(

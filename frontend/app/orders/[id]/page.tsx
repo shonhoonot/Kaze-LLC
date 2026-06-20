@@ -41,7 +41,8 @@ export default function OrderDetailPage() {
       return;
     }
     load().then((o) => {
-      if (shouldPay && o.payment_status !== "paid") startPayment(o.id);
+      const closed = o.status === "CANCELLED" || o.status === "REFUNDED";
+      if (shouldPay && o.payment_status !== "paid" && !closed) startPayment(o.id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
@@ -110,7 +111,7 @@ export default function OrderDetailPage() {
         </div>
 
         {/* payment box */}
-        {order.payment_status !== "paid" && (
+        {order.payment_status !== "paid" && order.status !== "CANCELLED" && order.status !== "REFUNDED" && (
           <div className="card mt-4 p-5">
             <h2 className="font-semibold">Төлбөр төлөх</h2>
             {invoice ? (

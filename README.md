@@ -159,6 +159,9 @@ Each transition writes an `order_event`, surfaced to the customer as a visual tr
   and pagination; soft-delete + one-click reactivate.
 - **Bulk CSV import** — upload a CSV (`POST /admin/products/import`) with
   per-row error reporting; UI on the admin products page.
+- **Referral credit redemption** — accrued `referral_credit_jpy` is now spent
+  at checkout (capped at the order total, never negative) and the balance is
+  decremented; previously it was a display-only dead balance.
 - **Help / FAQ & contact** — a `/contact` page with an FAQ accordion and a
   public message form (`POST /contact`, links to the user when signed in);
   staff triage submissions under `/admin/contact` (filter open/done, toggle
