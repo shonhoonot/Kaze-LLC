@@ -7,10 +7,11 @@ import { useAuth } from "@/lib/auth";
 import { useCart } from "./CartProvider";
 
 const NAV = [
-  { href: "/category/clothing",  label: "Дэлгүүр",          jp: "商品" },
-  { href: "/how-it-works",       label: "Хэрхэн ажилладаг", jp: "流れ" },
-  { href: "/shipping-info",      label: "Хүргэлт",           jp: "配送" },
-  { href: "/faq",                label: "Асуулт",             jp: "FAQ" },
+  { href: "/category/clothing",  label: "Дэлгүүр",      jp: "商品" },
+  { href: "/calculator",         label: "Үнэ тооцоол",  jp: "計算" },
+  { href: "/tracking",           label: "Ачаа хянах",   jp: "追跡" },
+  { href: "/how-it-works",       label: "Хэрхэн",       jp: "流れ" },
+  { href: "/contact",            label: "Холбоо",        jp: "連絡" },
 ];
 
 export default function Header() {

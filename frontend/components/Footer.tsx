@@ -5,8 +5,10 @@ import Image from "next/image";
 
 const LINKS = [
   { href: "/category/clothing",  label: "Дэлгүүр" },
+  { href: "/calculator",         label: "Үнэ тооцоолох" },
+  { href: "/tracking",           label: "Ачаа хянах" },
   { href: "/how-it-works",       label: "Хэрхэн ажилладаг" },
-  { href: "/shipping-info",      label: "Хүргэлтийн мэдээлэл" },
+  { href: "/contact",            label: "Холбоо барих" },
   { href: "/faq",                label: "Түгээмэл асуулт" },
   { href: "/orders",             label: "Миний захиалга" },
 ];
