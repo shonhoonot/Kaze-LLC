@@ -1,54 +1,118 @@
 # 風 Kaze Shop
 
-Japan → Mongolia proxy-buying & cargo-consolidation e-commerce platform for **Kaze LLC**.
+> Japan → Mongolia proxy-buying & cargo-consolidation e-commerce platform — **live on Azure.**
 
-Customers in Mongolia browse Japanese products (Amazon JP, Uniqlo, GU, …), order in **MNT**,
-and Kaze LLC buys the goods in Japan, bags them per customer, consolidates bags into a 25 kg
-box, and ships by sea cargo. Customers pay: **product cost + markup + per-item service fee +
-weight-based shipping fee.**
-
-UI language: **Mongolian (Cyrillic)**. Prices in **MNT** (JPY shown as secondary).
-
----
-
-## Stack
-
-| Layer    | Tech                                                        |
-| -------- | ----------------------------------------------------------- |
-| Frontend | Next.js 14 (App Router) · TypeScript · Tailwind CSS         |
-| Backend  | FastAPI (Python 3.12) · SQLAlchemy 2                        |
-| DB       | PostgreSQL 16                                               |
-| Auth     | Phone + OTP (+976) → JWT                                    |
-| Payments | QPay (provider-swappable interface; Stub for dev)           |
-| Deploy   | Docker (backend + frontend + Postgres via docker-compose)   |
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=flat&logo=next.js&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Azure](https://img.shields.io/badge/Azure_Container_Apps-0078D4?style=flat&logo=microsoftazure&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 
 ---
 
-## Quick start (Docker)
+## 🌐 Live
 
-```bash
-cp .env.example .env          # then edit secrets
-docker compose up --build
-# backend  → http://localhost:8000  (docs at /docs)
-# frontend → http://localhost:3000
+| | URL |
+|---|---|
+| **Frontend** | https://kaze-frontend.whiteforest-12c379cf.eastasia.azurecontainerapps.io |
+| **Backend API** | https://kaze-backend.whiteforest-12c379cf.eastasia.azurecontainerapps.io |
+| **Swagger Docs** | https://kaze-backend.whiteforest-12c379cf.eastasia.azurecontainerapps.io/docs |
 
-# seed demo data (3 categories, 12 products, admin user, open box)
-docker compose exec backend python -m app.seed
+---
+
+## Architecture
+
+```
+Browser
+  │
+  ▼
+┌─────────────────────────────────┐
+│  Azure Container Apps           │
+│                                 │
+│  ┌─────────────────────────┐    │
+│  │  Next.js 14 (Frontend)  │    │
+│  │  TypeScript · Tailwind  │    │
+│  │  Port 3000              │    │
+│  └────────────┬────────────┘    │
+│               │ REST API        │
+│  ┌────────────▼────────────┐    │
+│  │  FastAPI (Backend)      │    │
+│  │  Python 3.12 · JWT      │    │
+│  │  Port 8000              │    │
+│  └────────────┬────────────┘    │
+└───────────────┼─────────────────┘
+                │
+  ┌─────────────▼─────────────┐
+  │  Azure Database for       │
+  │  PostgreSQL Flexible      │
+  │  Server (East Asia)       │
+  └───────────────────────────┘
+
+  ┌───────────────────────────┐
+  │  Azure Container Registry │
+  │  kazeshopacr.azurecr.io   │
+  └───────────────────────────┘
 ```
 
-Demo admin: log in with phone **+97699000000** (OTP is returned in the API
-response while `OTP_DEV_MODE=true`).
+| Layer | Service | Detail |
+|---|---|---|
+| Frontend | Azure Container Apps | Next.js 14 standalone, auto-scaling 0→2 replicas |
+| Backend | Azure Container Apps | FastAPI + Uvicorn, auto-scaling 0→2 replicas |
+| Database | Azure PostgreSQL Flexible Server | v16, Burstable B1ms, East Asia |
+| Registry | Azure Container Registry | Basic tier, images built via ACR Tasks |
+| Region | East Asia (Hong Kong) | Closest to Mongolia |
 
-## Local dev (without Docker)
+---
+
+## What it does
+
+Customers in Mongolia browse genuine Japanese products (Amazon JP, Uniqlo, GU, …), pay in **MNT**, and Kaze LLC:
+
+1. Buys goods in Japan on the customer's behalf
+2. Bags each order with a label at the JP warehouse
+3. Consolidates bags into a 25 kg cargo box
+4. Ships by sea to Mongolia → customer picks up or receives delivery
+
+**Pricing formula (all math in integer JPY):**
+```
+customer_price = base_price + markup(10%) + service_fee(¥400/item) + shipping(¥350/kg)
+display_mnt    = customer_price × fx_rate (default 22.5 ₮/¥)
+```
+Rules are admin-overridable at **product > category > global** precedence.
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
+| Backend | FastAPI · Python 3.12 · SQLAlchemy 2 · Pydantic v2 |
+| Database | PostgreSQL 16 |
+| Auth | Phone + OTP → JWT (7-day tokens) |
+| Payments | QPay (swappable interface; Stub for dev) |
+| Infra | Azure Container Apps · Azure Container Registry · Azure PostgreSQL |
+| CI Build | ACR Tasks (cloud Docker build — no local Docker required) |
+
+---
+
+## Local Development
+
+**Prerequisites:** Node 20+, Python 3.9+, PostgreSQL (or [Postgres.app](https://postgresapp.com))
 
 **Backend**
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-export DATABASE_URL=postgresql+psycopg://kaze:kaze_dev_password@localhost:5432/kaze
-python -m app.seed
-uvicorn app.main:app --reload
+
+# create local DB
+createdb kaze
+
+# start
+DATABASE_URL=postgresql+psycopg://<user>@localhost:5432/kaze uvicorn app.main:app --reload
+# → http://localhost:8000/docs
 ```
 
 **Frontend**
@@ -56,80 +120,73 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
+# → http://localhost:3000
 ```
 
----
-
-## The pricing engine (`backend/app/pricing.py`)
-
-The single source of truth for customer-facing prices. **All money math is integer JPY**;
-MNT is computed only at the very end (for display/charging).
-
-```
-markup_jpy        = round(base_price_jpy * markup_percent)        # per unit, × qty
-service_fee_jpy   = service_fee_per_item_jpy * qty
-shipping_fee_jpy  = round(weight_grams/1000 * shipping_fee_per_kg) # per unit, × qty
-line_total_jpy    = base*qty + markup + service_fee + shipping_fee
-display_mnt       = round(line_total_jpy * fx_rate_jpy_mnt)
-```
-
-Defaults (admin-editable in `/admin/pricing`): markup 10%, service fee ¥400/item,
-shipping ¥350/kg, FX 22.5 ₮/¥. Rules are overridable at **product > category > global**
-precedence (see `services/pricing_service.py`).
-
-Run the unit tests:
+**Seed demo data** (3 categories, 12 products, admin user, open box):
 ```bash
-cd backend && python -m pytest
+cd backend && source venv/bin/activate
+DATABASE_URL=postgresql+psycopg://<user>@localhost:5432/kaze python -m app.seed
+```
+
+Demo admin login: phone **+97699000000** — OTP is returned in the API response when `OTP_DEV_MODE=true`.
+
+---
+
+## Deploy to Azure
+
+Images are built in the cloud via ACR Tasks — no local Docker needed.
+
+```bash
+# 1. Login
+az login
+
+# 2. Build & push backend
+az acr build --registry kazeshopacr \
+  --image kaze-backend:latest ./backend
+
+# 3. Build & push frontend (with live backend URL)
+az acr build --registry kazeshopacr \
+  --image kaze-frontend:latest \
+  --build-arg "NEXT_PUBLIC_API_BASE_URL=https://kaze-backend.whiteforest-12c379cf.eastasia.azurecontainerapps.io" \
+  ./frontend
+
+# 4. Update running containers
+az containerapp update --name kaze-backend --resource-group kaze-rg \
+  --image kazeshopacr.azurecr.io/kaze-backend:latest
+
+az containerapp update --name kaze-frontend --resource-group kaze-rg \
+  --image kazeshopacr.azurecr.io/kaze-frontend:latest
 ```
 
 ---
 
-## Order pipeline
+## Key Routes
 
-`PLACED → PAID → PURCHASING_IN_JP → RECEIVED_AT_JP_WAREHOUSE → PACKED → SHIPPED_CARGO →
-ARRIVED_MN → READY_FOR_PICKUP → DELIVERED` (+ `CANCELLED`, `REFUNDED`).
+**Customer:** `/` · `/category/[slug]` · `/product/[id]` · `/cart` · `/checkout` · `/orders/[id]` · `/account` · `/how-it-works`
 
-Each transition writes an `order_event`, surfaced to the customer as a visual tracker
-(`/orders/[id]`). Shipping a box auto-advances all its orders to `SHIPPED_CARGO`.
+**Admin/Staff:** `/admin` (dashboard) · `/admin/products` · `/admin/pricing` · `/admin/orders` (kanban) · `/admin/boxes` (consolidation)
 
----
-
-## Key routes
-
-**Customer:** `/` · `/category/[slug]` · `/product/[id]` · `/cart` · `/checkout` ·
-`/orders` · `/orders/[id]` · `/account` · `/login` · `/how-it-works` · `/faq` ·
-`/shipping-info`
-
-**Admin/staff:** `/admin` (dashboard) · `/admin/products` · `/admin/pricing` ·
-`/admin/orders` (kanban) · `/admin/boxes` (consolidation tool)
-
-**API:** see interactive docs at `http://localhost:8000/docs`.
+**API:** [Interactive Swagger docs →](https://kaze-backend.whiteforest-12c379cf.eastasia.azurecontainerapps.io/docs)
 
 ---
 
-## Admin: bulk add products
+## Order Pipeline
 
-- **Manual**: `/admin/products` — paste an Amazon JP / Uniqlo / GU URL and fill in
-  title/price/weight/image (no scraping — respects retailer ToS).
-- **CSV**: `POST /admin/products/import` (multipart `file`). See
-  `backend/sample_products.csv` for the column format.
+```
+PLACED → PAID → PURCHASING_IN_JP → RECEIVED_AT_JP_WAREHOUSE
+      → PACKED → SHIPPED_CARGO → ARRIVED_MN → READY_FOR_PICKUP → DELIVERED
+```
+Each transition writes an `order_event`, shown to the customer as a live tracker. Shipping a box auto-advances all its orders to `SHIPPED_CARGO`.
 
 ---
 
-## Deployment notes
+## Roadmap
 
-- Containerized for **Azure Container Apps** or a **Contabo VPS** (Docker + nginx).
-- Frontend builds as a Next.js standalone server.
-- Backend exposes `/health` for health checks.
-- Object storage: `STORAGE_BACKEND=local` (served at `/uploads`) or `azure_blob`.
-- **Secrets** live in env vars / Key Vault — never hardcoded. See `.env.example`.
-- For production schema evolution, add Alembic migrations (v1 uses `create_all`).
-
-## Roadmap hooks (left intentionally open)
-
-- Real SMS provider for OTP (`SMS_PROVIDER`).
-- Live FX daily job writing into the global pricing rule (`FX_MODE=live`).
-- Product importer/scraper — **manual + CSV only** for v1 (ToS-safe).
-- LendMN payment provider (add alongside QPay behind `PaymentProvider`).
-- NOVA agent / WhatsApp · Messenger · Telegram contact integration.
-- Referral program (codes + credits) — schema in place, UI on `/account`.
+- Real SMS OTP provider (`SMS_PROVIDER=twilio`)
+- Live JPY/MNT FX rate job (`FX_MODE=live`)
+- Azure Blob Storage for product images (`STORAGE_BACKEND=azure_blob`)
+- Alembic migrations for schema evolution
+- LendMN payment provider alongside QPay
+- WhatsApp / Telegram customer contact integration
+- Referral program UI (schema already in place)
